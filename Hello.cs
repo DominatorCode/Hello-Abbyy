@@ -1,4 +1,4 @@
-// В© ABBYY. 2012.
+// © ABBYY. 2012.
 // SAMPLES code is property of ABBYY, exclusive rights are reserved. 
 // DEVELOPER is allowed to incorporate SAMPLES into his own APPLICATION and modify it 
 // under the terms of License Agreement between ABBYY and DEVELOPER.
@@ -130,7 +130,7 @@ namespace Hello
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(155, 13);
             this.label1.TabIndex = 12;
-            this.label1.Text = "Г“ГЄГ Г¦ГЁГІГҐ ГЇГ ГЇГЄГі Г¤Г«Гї ГЅГЄГ±ГЇГ®Г°ГІГ ";
+            this.label1.Text = "Укажите папку для экспорта";
             // 
             // HelloForm
             // 
@@ -166,7 +166,7 @@ namespace Hello
                 processImages();
                 var test = GetImagesQualityInfo();
 
-                //RunExternalExe(@"E:\VS Pro\DocNet Visual Editor v12\bin\Release\DocNet Visual Editor v12.exe", @"E:\VS Pro\Hello (C#) v12\bin\Debug\HelloFiles\FCEExport\ГЂГЄГІ2018-10-31_11-35-08.tif");
+                //RunExternalExe(@"E:\VS Pro\DocNet Visual Editor v12\bin\Release\DocNet Visual Editor v12.exe", @"E:\VS Pro\Hello (C#) v12\bin\Debug\HelloFiles\FCEExport\Акт2018-10-31_11-35-08.tif");            
 
                 //DeleteEmptyRows(@"E:\VS Pro\Hello (C#)\bin\Debug\HelloFiles\FCEExport");
 
@@ -177,13 +177,13 @@ namespace Hello
                 if (!String.IsNullOrEmpty(errorsRecognize))
                     MessageBox.Show(errorsRecognize);
 
-                trace("Г‚Г±ГҐ Гў ГЇГ®Г°ГїГ¤ГЄГҐ");
+                trace("Все в порядке");
             }
             catch (Exception error)
             {
                 showError(error.Message);
                 MessageBox.Show(error.StackTrace);
-                trace("Г‘ГЎГ®Г©");
+                trace("Сбой");
             }
             finally
             {
@@ -205,7 +205,7 @@ namespace Hello
             IScanManager scanManager = _engine.CreateScanManager();
             IStringsCollection sources = scanManager.ScanSources;
 
-            string sourcesList = "Г‘ГЇГЁГ±Г®ГЄ Г±ГЄГ Г­ГҐГ°Г®Гў: ";
+            string sourcesList = "Список сканеров: ";
             string samplesFolder = AppDomain.CurrentDomain.BaseDirectory + "HelloFiles";
             
             if (sources.Count > 0)
@@ -221,7 +221,7 @@ namespace Hello
             }
             else
             {
-                sourcesList = "Г‘ГЄГ Г­ГҐГ°Г» Г­ГҐ Г­Г Г©Г¤ГҐГ­Г»";
+                sourcesList = "Сканеры не найдены";
             }
             trace(sourcesList);
             // If at least one scan source found
@@ -274,7 +274,7 @@ namespace Hello
 
                 _imageLoadingParams.AutocorrectResolution = true;
 
-                // Г±ГЇГ®Г°Г­Г»ГҐ Г­Г Г±ГІГ°Г®Г©ГЄГЁ
+                // спорные настройки
                 _imageLoadingParams.DiscardImageColor = true;
                 _imageLoadingParams.UseFastBinarization = true;
                 //_imageLoadingParams.ConvertToGray = true;
@@ -308,7 +308,7 @@ namespace Hello
                 string samplesFolder = AppDomain.CurrentDomain.BaseDirectory + "HelloFiles";
 
                 _processor = _engine.CreateFlexiCaptureProcessor();
-                // Г§Г ГЈГ°ГіГ¦Г ГҐГ¬ ГёГ ГЎГ«Г®Г­Г»
+                // загружаем шаблоны
                 foreach (string file in Directory.EnumerateFiles(samplesFolder + @"\SampleProject\Templates", "*.fcdot"))
                 {
                     _processor.AddDocumentDefinitionFile(file);                                      
@@ -401,8 +401,9 @@ namespace Hello
                             IImageDocument pageImageDocument = page.ReadOnlyImage;
                             IImage bwImage = pageImageDocument.BlackWhiteImage;
 
-                            // С‚РµСЃС‚РѕРІР°СЏ РЅР°РґРїРёСЃСЊ РєРёСЂРёР»Р»РёС†РµР№
-                            // pagination of unrecognized pages (for multi-page documents)
+
+                            // нумерация нераспознанных страниц в многостраничном документе
+
                             int pageIndex = page.SourceImageInfo.PageIndex;
                             int pageNumber;
 
@@ -420,7 +421,7 @@ namespace Hello
                             IImage image = document.Pages[0].Image.BlackWhiteImage;
                             image.WriteToFile(exportFolder + "\\undefined" + "\\" + name + "_p" + pageNumber + ".tif",
                         ImageFileFormatEnum.IFF_Tif, null, ImageCompressionTypeEnum.ICT_CcittGroup4, null);
-                            _listErrorsDocumentRecognizing.Add("ГЌГҐ ГіГ¤Г Г«Г®Г±Гј Г°Г Г±ГЇГ®Г§Г­Г ГІГј ГЁГ§Г®ГЎГ°Г Г¦ГҐГ­ГЁГҐ: " + document.Pages[0].OriginalImagePath);
+                            _listErrorsDocumentRecognizing.Add("Не удалось распознать изображение: " + document.Pages[0].OriginalImagePath);
                             continue;
                         }
                     }
@@ -429,11 +430,11 @@ namespace Hello
                    
                     _processor.ExportDocument(document, exportFolder);
 
-                    // ГҐГ±Г«ГЁ ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГІГ±Гї ГўГ±ГІГ°Г®ГҐГ­Г­Г»Г© Г±ГЇГ®Г±Г®ГЎ Г®ГЎГ°Г ГЎГ®ГІГЄГЁ ГЁГ§Г®ГЎГ°Г Г¦ГҐГ­ГЁГ©,
-                    // ГЇГ°Г®ГўГҐГ°ГЁГІГј ГЁГµ ГЄГ Г·ГҐГ±ГІГўГ®
+                    // если используется встроенный способ обработки изображений,
+                    // проверить их качество
                     if (!condUsingCustomImageSource)
                         CheckIsImageSuitableForOcr(document);
-                    // Г±ГҐГ°ГЁГ Г«ГЁГ§Г Г¶ГЁГї Г¤Г Г­Г­Г»Гµ Гў Г®ГІГ¤ГҐГ«ГјГ­ГіГѕ ГЇГ ГЇГЄГі
+                    // сериализация данных в отдельную папку
                     var directory = new DirectoryInfo(exportFolder);
                     string myFile = directory.GetFiles()
                                  .OrderByDescending(f => f.LastWriteTime)
@@ -452,7 +453,7 @@ namespace Hello
                     count++;                                     
                 }
 
-                // Г¤Г®ГЎГ ГўГ«ГїГҐГ¬ ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГѕ Г® Г­ГҐГ°Г Г±ГЇГ®Г§Г­Г Г­Г­Г»Гµ Г±ГІГ°Г Г­ГЁГ¶Г Гµ
+                // добавляем информацию о нераспознанных страницах
                 if (listDeclarationRecognizeErrors.Count > 0)
                 {
                     if (String.IsNullOrEmpty(_warningRecognizeResults))
@@ -464,7 +465,7 @@ namespace Hello
                     }
                 }
 
-                // Г¤Г®ГЎГ ГўГ«ГїГҐГ¬ ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГѕ Г® Г­ГҐГ°Г±Г ГЇГ®Г§Г­Г Г­Г­Г»Гµ Г«ГЁГ±ГІГ Гµ Г¤ГҐГЄГ«Г Г°Г Г¶ГЁГЁ
+                // добавляем информацию о нерсапознанных листах декларации
                 if (listDeclarationRecognizeErrors.Count > 0)
                 {
                     if (String.IsNullOrEmpty(_warningRecognizeResults))
@@ -484,8 +485,8 @@ namespace Hello
             }
         }
 
-        /// <summary>Г€Г­ГЁГ¶ГЁГ Г«ГЁГ§ГЁГ°ГіГҐГІ Г¤ГўГЁГ¦Г®ГЄ Г°Г Г±ГЇГ®Г§Г­Г ГўГ Г­ГЁГї ABBYY</summary>
-        /// <returns>Г€Г±ГІГЁГ­Г  - Г¤ГўГЁГ¦Г®ГЄ Г§Г ГЈГ°ГіГ¦ГҐГ­</returns>
+        /// <summary>Инициализирует движок распознавания ABBYY</summary>
+        /// <returns>Истина - движок загружен</returns>
         public bool LoadEngine()
         {
             if (_engine != null)
@@ -495,7 +496,7 @@ namespace Hello
 
             try
             {
-                traceText += "Г‚Г»ГЎГЁГ°Г ГҐГ¬ ГІГЁГЇ Loader";
+                traceText += "Выбираем тип Loader";
 
 
                 _engineLoader = new OutprocLoader();
@@ -503,7 +504,7 @@ namespace Hello
                 workProcess.SetParentProcessId(System.Diagnostics.Process.GetCurrentProcess().Id);
 
 
-                traceText += " ,Г§Г ГЈГ°ГіГ¦Г ГҐГ¬ Г¤ГўГЁГ¦Г®ГЄ _engineLoader.Load()";
+                traceText += " ,загружаем движок _engineLoader.Load()";
 
                 _engineLoader.CustomerProjectId = Seral;
                 _engineLoader.LicensePath = "";
@@ -514,19 +515,19 @@ namespace Hello
                 ILicense license = _engine.CurrentLicense;
                 if (!license.IsActivated)
                 {
-                    errorText = "Г„Г Г­Г­Г Гї Г«ГЁГ¶ГҐГ­Г§ГЁГї Г­ГҐ Г ГЄГІГЁГўГЁГ°Г®ГўГ Г­Г , Г«ГЁГЎГ® ГўГ±ГІГ ГўГ«ГҐГ­ Г­ГҐГўГҐГ°Г­Г»Г© ГЄГ«ГѕГ·.";
+                    errorText = "Данная лицензия не активирована, либо вставлен неверный ключ.";
                     //MessageBox.Show(errorText);
                     UnloadEngine();
                     return false;
                 }
 
-                // ГҐГ±Г«ГЁ ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГІГ±Гї Г­ГҐГ±ГЄГ®Г«ГјГЄГ® Г«ГЁГ¶ГҐГ­Г§ГЁГ© ГЇГ®Г¤ГЎГЁГ°Г ГҐГ¬ ГІГі
-                // Гі ГЄГ®ГІГ®Г°Г®Г© ГҐГ±ГІГј Г±ГІГ°Г Г­ГЁГ¶Г»
+                // если используется несколько лицензий подбираем ту
+                // у которой есть страницы
                 if (license.RemainingUnits == 0)
                 {
                     if (!ChangeLicense())
                     {
-                        errorText = "Г’ГҐГЄГіГ№Г Гї Г«ГЁГ¶ГҐГ­Г§ГЁГї ГЁГ¬ГҐГҐГІ 0 Г±ГІГ°Г Г­ГЁГ¶ Г¤Г«Гї Г°Г Г±ГЇГ®Г§Г­Г ГўГ Г­ГЁГї, Г­ГҐ ГіГ¤Г Г«Г®Г±Гј Г±Г¬ГҐГ­ГЁГІГј Г«ГЁГ¶ГҐГ­Г§ГЁГѕ Г­Г  Г¤Г°ГіГЈГіГѕ";
+                        errorText = "Текущая лицензия имеет 0 страниц для распознавания, не удалось сменить лицензию на другую";
                         throw new Exception(errorText);
                     }
                 }
@@ -541,7 +542,7 @@ namespace Hello
                     case -2147221164:
                         {
                             errorText = "ABBYY FlexiCapture not registered in system with CLSID {C0003004-0000-48FF-9197-57B7554849BA}";
-                            errorText = errorText + Environment.NewLine + "ГЌГҐГ®ГЎГµГ®Г¤ГЁГ¬Г® ГўГ»ГЇГ®Г«Г­ГЁГІГј Г°ГҐГЈГЁГ±ГІГ°Г Г¶ГЁГѕ ГЇГ°Г®ГЈГ°Г Г¬Г¬Г» (regsvr) Гў Г±Г«ГіГ¦ГЎГҐ ГЄГ®Г¬ГЇГ®Г­ГҐГ­ГІ";
+                            errorText = errorText + Environment.NewLine + "Необходимо выполнить регистрацию программы (regsvr) в службе компонент";
                             //MessageBox.Show(errorText);
                             break;
                         }
@@ -561,7 +562,7 @@ namespace Hello
                     // To use LocalServer under a special account you must add this account to 
                     // the COM-object's launch permissions (using DCOMCNFG or OLE/COM object viewer)
                     errorText = "Launch permission for the work-process COM-object is not granted. Use DCOMCNFG to change security settings for the object. (" + e.Message + ")";
-                    errorText = errorText + Environment.NewLine + "ГЌГҐГ®ГЎГµГ®Г¤ГЁГ¬Г® Г°Г Г±ГёГЁГ°ГЁГІГј ГЇГ°Г ГўГ  Г¤Г®Г±ГІГіГЇГ  Г¤Г«Гї ГЇГ°Г®ГЈГ°Г Г¬Г¬Г» Гў Г±Г«ГіГ¦ГЎГҐ ГЄГ®Г¬ГЇГ®Г­ГҐГ­ГІ";
+                    errorText = errorText + Environment.NewLine + "Необходимо расширить права доступа для программы в службе компонент";
                     //MessageBox.Show(errorText);
                     //throw new Exception(@"Launch permission for the work-process COM-object is not granted.
                     // Use DCOMCNFG to change security settings for the object. (" + e.Message + ")");
@@ -575,12 +576,12 @@ namespace Hello
                 return false;
             }
 
-            traceText += " ,Г¤ГўГЁГ¦Г®ГЄ Г§Г ГЈГ°ГіГ¦ГҐГ­";
+            traceText += " ,движок загружен";
 
             return true;
         }
 
-        /// <summary>Г‚Г»ГЈГ°ГіГ¦Г ГҐГІ Г¤ГўГЁГ¦Г®ГЄ Г°Г Г±ГЇГ®Г§Г­Г ГўГ Г­ГЁГї ABBYY Гў Г±ГЁГ±ГІГҐГ¬ГҐ</summary>
+        /// <summary>Выгружает движок распознавания ABBYY в системе</summary>
         public void UnloadEngine()
         {
             if (_engine != null)
@@ -656,7 +657,7 @@ namespace Hello
             exportFolder = this.textBox1.Text;
         }
 
-        // Г¤Г®ГЎГ ГўГ«ГҐГ­ГЁГҐ Г¤Г®ГЇГ®Г«Г­ГЁГІГҐГ«ГјГ­Г®Г© ГїГ·ГҐГ©ГЄГЁ Г­Г  3Г© ГіГ°Г®ГўГҐГ­Гј Г¤Г«Гї ГЄГ®Г°Г°ГҐГЄГІГ­Г®ГЈГ® Г·ГІГҐГ­ГЁГї Г¤Г®ГЄГіГ¬ГҐГ­ГІГ 
+        // добавление дополнительной ячейки на 3й уровень для корректного чтения документа
         void AddRootNode(string paramPathExportFolder)
         {
             string[] xmlFiles = Directory.GetFiles(paramPathExportFolder, "*.xml");
@@ -667,13 +668,13 @@ namespace Hello
                 xmlDocument.Load(xmlFile);
                 XmlNode itemNodes = xmlDocument.DocumentElement.FirstChild;
 
-                // ГЎГҐГ°ГҐГ¬ Г§Г­Г Г·ГҐГ­ГЁГҐ ГІГЁГЇГ  Г¤Г®ГЄГіГ¬ГҐГ­ГІГ 
+                // берем значение типа документа
                 XmlNodeList nodeDocType = xmlDocument.GetElementsByTagName("_DocType");
                 string nameNodeNew = "";
                 if (nodeDocType.Count > 0)
                     nameNodeNew = nodeDocType[0].Value;
 
-                // ГЇГ°Г®ГўГҐГ°ГЄГ  Г­Г  Г­Г Г«ГЁГ·ГЁГҐ Г¤Г®ГЇГ®Г«Г­ГЁГІГҐГ«mГ­Г®Г© ГїГ·ГҐГ©ГЄГЁ
+                // проверка на наличие дополнителmной ячейки
                 XmlNodeList nodeDocTypeExists = null;
                 if (!String.IsNullOrEmpty(nameNodeNew))
                     nodeDocTypeExists = xmlDocument.GetElementsByTagName(nameNodeNew);
@@ -733,7 +734,7 @@ namespace Hello
                         {
                             itemNodes[i].ParentNode.RemoveChild(itemNodes[i]);
                         }
-                        else if (condTaxField) // ГўГ»Г·ГЁГ±Г«ГїГҐГ¬ ГЌГ„Г‘ ГўГµГ®Г¤ГЁГІ Гў Г±ГІГ®ГЁГ¬Г®Г±ГІГј ГЁГ«ГЁ Г­ГҐГІ
+                        else if (condTaxField) // вычисляем НДС входит в стоимость или нет
                         {                           
                             double Price = 0;
                             double Qty = 0;
@@ -877,7 +878,7 @@ namespace Hello
                 string nameFinal = nameDocument + "_" + (numberPageCast + 1).ToString().PadLeft(5, '0');
                 if (File.Exists(nameFinal))
                 {
-                    _listErrorsDocumentRecognizing.Add("Г‹ГЁГ±ГІГ» Г¤Г«Гї Г¤ГҐГЄГ«Г Г°Г Г¶ГЁГЁ ГўГ®Г§Г¬Г®Г¦Г­Г® ГЇГҐГ°ГҐГЇГіГІГ Г­Г»");
+                    _listErrorsDocumentRecognizing.Add("Листы для декларации возможно перепутаны");
                     Random rnd = new Random();
                     int rndnumber = rnd.Next(999);
                     return nameFinal + "_" + rndnumber;
@@ -909,7 +910,7 @@ namespace Hello
                     }
                     catch (Exception Ex)
                     {
-                        _errorText = "ГЌГҐ ГіГ¤Г Г«Г®Г±Гј Г±Г¬ГҐГ­ГЁГІГј Г«ГЁГ¶ГҐГ­Г§ГЁГѕ: " + Ex.Message;
+                        _errorText = "Не удалось сменить лицензию: " + Ex.Message;
                         throw new Exception(_errorText);
                     }
 
@@ -925,13 +926,13 @@ namespace Hello
 
         bool CheckItemsListMissingDocuments(bool condILGTD, bool condILKDT, string pathILGDT, string pathILKDT)
         {
-            // ГҐГ±Г«ГЁ Гі ГЉГ„Г’ Г®ГІГ±ГіГІГ±ГІГўГіГѕГІ Г±ГўГ®ГЁ Г«ГЁГ±ГІГ»
-            // ГЄГ®ГЇГЁГ°ГіГҐГ¬ Гі ГѓГ„Г’
+            // если у КДТ отсутствуют свои листы
+            // копируем у ГДТ
             if (condILGTD & !condILKDT) 
             {
                 Directory.CreateDirectory(pathILKDT);
 
-                // ГЄГ®ГЇГЁГ°ГіГҐГ¬ ГўГ±ГҐ ГґГ Г©Г«Г»
+                // копируем все файлы
                 foreach (string newPath in Directory.GetFiles(pathILGDT, "*.*",
                     SearchOption.AllDirectories))
                     File.Copy(newPath, newPath.Replace(pathILGDT, pathILKDT), true);
@@ -963,7 +964,7 @@ namespace Hello
             }
             catch (Exception ex)
             {
-                _errorText = "ГЋГёГЁГЎГЄГ  Г§Г ГЇГіГ±ГЄГ  ГўГ­ГҐГёГ­ГҐГЈГ® exe: " + ex.Message + Environment.NewLine + ex.StackTrace;
+                _errorText = "Ошибка запуска внешнего exe: " + ex.Message + Environment.NewLine + ex.StackTrace;
                 throw new Exception(_errorText);
             }
         }
@@ -1010,7 +1011,7 @@ namespace Hello
         public string GetSingleTemplateVersion(string pathFileTemplate)
         {
             if (_engine == null)
-                throw new Exception("Г„ГўГЁГ¦Г®ГЄ FlexiCapture Г­ГҐ ГЁГ­ГЁГ¶ГЁГ Г«ГЁГ§ГЁГ°Г®ГўГ Г­");
+                throw new Exception("Движок FlexiCapture не инициализирован");
             if (!File.Exists(pathFileTemplate))
                 return "";
 
@@ -1030,7 +1031,7 @@ namespace Hello
                 documentDefinition.LoadFromFile(pathFileTemplate);
                 IStringsCollection collectionClasses = documentDefinition.GetClassNames();
                
-                return collectionClasses.ToString() + " ГўГҐГ°Г±ГЁГї ";*/
+                return collectionClasses.ToString() + " версия ";*/
                 return "";
             }
 
@@ -1041,7 +1042,7 @@ namespace Hello
         {
             if (String.IsNullOrEmpty(_pathDirectoryTemplates))
             {
-                _errorText = "ERROR: FC_Recognize: GetTemplateVersion: " + Environment.NewLine + "ГЌГҐ Г§Г Г¤Г Г­ ГЇГіГІГј ГЄ Г¤ГЁГ°ГҐГЄГІГ®Г°ГЁГЁ Г± ГёГ ГЎГ«Г®Г­Г Г¬ГЁ";
+                _errorText = "ERROR: FC_Recognize: GetTemplateVersion: " + Environment.NewLine + "Не задан путь к директории с шаблонами";
                 throw new Exception(_errorText);
             }
 
@@ -1074,7 +1075,7 @@ namespace Hello
         {
             pathDirectoryTemplates = pathDirectoryTemplates + "\\Templates";
             if (!Directory.Exists(pathDirectoryTemplates))
-                throw new Exception("Г„ГЁГ°ГҐГЄГІГ®Г°ГЁГї Г®ГІГ±ГіГІГ±ГІГўГіГҐГІ: " + pathDirectoryTemplates);
+                throw new Exception("Директория отсутствует: " + pathDirectoryTemplates);
 
             _pathDirectoryTemplates = pathDirectoryTemplates;
         }
@@ -1098,7 +1099,7 @@ namespace Hello
                 }
                 catch (Exception ex)
                 {
-                    AppParameters.TextError.Add("SetLoggingPath: ГЌГҐ ГіГ¤Г Г«Г®Г±Гј Г±Г®Г§Г¤Г ГІГј Г¤ГЁГ°ГҐГЄГІГ®Г°ГЁГѕ: " + pathDirectoryFileLogging + Environment.NewLine + ex.Message);
+                    AppParameters.TextError.Add("SetLoggingPath: Не удалось создать директорию: " + pathDirectoryFileLogging + Environment.NewLine + ex.Message);
                     return false;
                 }
             }
@@ -1111,7 +1112,7 @@ namespace Hello
             }
             catch (UnauthorizedAccessException)
             {
-                AppParameters.TextError.Add("ГЌГҐГІ ГЇГ°Г Гў Г­Г  Г§Г ГЇГЁГ±Гј Гі Г¤ГЁГ°ГҐГЄГІГ®Г°ГЁГЁ: " + pathDirectoryFileLogging);
+                AppParameters.TextError.Add("Нет прав на запись у директории: " + pathDirectoryFileLogging);
                 return false;
             }
 
@@ -1143,7 +1144,7 @@ namespace Hello
 
         public string GetImagesQualityInfo()
         {
-            AppParameters._listInfoQualityImages.Add("ГЌГҐГ®ГЎГµГ®Г¤ГЁГ¬Г® Г­Г Г±ГІГ°Г®ГЁГІГј Г±ГЄГ Г­ГҐГ° Г¤Г«Гї ГЇГ®ГўГ»ГёГҐГ­ГЁГї ГІГ®Г·Г­Г®Г±ГІГЁ Г°Г Г±ГЇГ®Г§Г­Г ГўГ Г­ГЁГї Г¤Г®ГЄГіГ¬ГҐГ­ГІГ®Гў");
+            AppParameters._listInfoQualityImages.Add("Необходимо настроить сканер для повышения точности распознавания документов");
 
             if (!String.IsNullOrEmpty(AppParameters._warnColorTypeBad))
             {
@@ -1171,8 +1172,8 @@ namespace Hello
             return infoOCR;
         }
 
-        /// <summary>ГЏГ°Г®ГўГҐГ°ГїГҐГІ, Г·ГІГ® ГЁГ§Г®ГЎГ°Г Г¦ГҐГ­ГЁГҐ Г­ГҐ Г¶ГўГҐГІГ­Г®ГҐ ГЁ ГЁГ¬ГҐГҐГІ Г°Г Г§Г°ГҐГёГҐГ­ГЁГҐ 300 dpi</summary>
-        /// <param name="pDocument">ГђГ Г±ГЇГ®Г§Г­Г Г­Г­Г»Г© Г¤Г®ГЄГіГ¬ГҐГ­ГІ</param>
+        /// <summary>Проверяет, что изображение не цветное и имеет разрешение 300 dpi</summary>
+        /// <param name="pDocument">Распознанный документ</param>
         void CheckIsImageSuitableForOcr(IDocument pDocument)
         {
             
@@ -1184,8 +1185,8 @@ namespace Hello
                     if (pDocument.Pages[0].Image.SourceImageXResolution < 300 || pDocument.Pages[0].Image.SourceImageYResolution < 300)
                     {
                         AppParameters._isSuitableForOcr = false;
-                        AppParameters._warnResolutionImageBad = "ГЋГЇГІГЁГ¬Г Г«ГјГ­Г®ГҐ Г°Г Г§Г°ГҐГёГҐГ­ГЁГҐ Г±ГЄГ Г­ГҐГ°Г  Г¤Г«Гї Г°Г Г±ГЇГ®Г§Г­Г ГўГ Г­ГЁГї Г¤Г®Г«Г¦Г­Г® ГЎГ»ГІГј Г®ГІ 300 dpi" + Environment.NewLine +
-                           "Г’Г ГЄ Г¦ГҐ ГЇГ°Г®ГўГҐГ°ГјГІГҐ Г¶ГўГҐГІГ®ГўГ®Г© Г°ГҐГ¦ГЁГ¬ Г±ГЄГ Г­ГҐГ°Г , Г®ГЇГІГЁГ¬Г Г«ГјГ­Г»Г© - Г®ГІГІГҐГ­ГЄГЁ Г±ГҐГ°Г®ГЈГ® ГЁГ«ГЁ Г·ГҐГ°Г­Г®-ГЎГҐГ«Г»Г©";
+                        AppParameters._warnResolutionImageBad = "Оптимальное разрешение сканера для распознавания должно быть от 300 dpi" + Environment.NewLine +
+                           "Так же проверьте цветовой режим сканера, оптимальный - оттенки серого или черно-белый";
                     }                                          
             }
         }
