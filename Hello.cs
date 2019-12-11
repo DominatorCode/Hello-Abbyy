@@ -516,7 +516,7 @@ namespace Hello
                             IImage bwImage = pageImageDocument.BlackWhiteImage;
 
 
-                            // нумерация нераспознанных страниц в многостраничном документе
+                            // нумерация нераспознанных страниц (для многостраничный документов)
                             int pageIndex = page.SourceImageInfo.PageIndex;
                             int pageNumber;
 
