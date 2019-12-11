@@ -163,124 +163,10 @@ namespace Hello
             goButton.Enabled = false;
             try
             {
-                //loadEngine();
-                //Scanning();
-                //trace("Scan done");
-
-                //string dateValues = "13.11-2016";
-                //string pattern = "dd MMMM yyyy";
-                ////DateTime testDate = DateTime.ParseExact(dateValues, null, null);
-                //DateTime testDate = DateTime.Parse(dateValues);
-
-                //int year;
-                //int month;
-                //int day;
-                //DateTime LicDate;
-                //if (engine.CurrentLicense.ExpirationDate(out year, out month, out day)) // !!!CurrentLicense вызывать до распознавания
-                //    LicDate = new DateTime(year, month, day);
-                //else
-                //    LicDate = DateTime.Now.AddYears(50);
-                //LicDate.ToString("yyyy-MM-dd");
-                //MessageBox.Show(testDate.ToString(LicDate.ToString("yyyy-MM-dd")));
-                //string testDate = DateTime.Now.ToString(pattern);
-
                 processImages();
                 var test = GetImagesQualityInfo();
 
                 //RunExternalExe(@"E:\VS Pro\DocNet Visual Editor v12\bin\Release\DocNet Visual Editor v12.exe", @"E:\VS Pro\Hello (C#) v12\bin\Debug\HelloFiles\FCEExport\Акт2018-10-31_11-35-08.tif");
-
-
-                //tmpGTDFoldersList.Add(AppDomain.CurrentDomain.BaseDirectory + @"\HelloFiles\FCEExport\test");
-                //condHasAdditionalDocuments = true;
-                //condItemsListGDTNeedsInject = true;
-                //condItemsListKDTNeedsInject = false;
-                //condKDTHasMainDocument = true;
-                //condKDTHasAdditionalDocument = true;
-
-                foreach (string tmpFolder in tmpGTDFoldersList)
-                {
-                    GTD_Parser GDTparser = new GTD_Parser(tmpFolder, "ГДТ");
-
-                    if (condHasAdditionalDocuments)
-                    {
-                        GDTparser.LoadAdditionalDocs();
-                    }
-                    
-                    if (condItemsListGDTNeedsInject)
-                    {
-                        if (!GDTparser.InitItemsList(folderItemsListGDTName))
-                            throw new Exception(string.Join(System.Environment.NewLine, GDTparser.errorGTDParser));
-
-                        GDTparser.AddItemsListData();                           
-                    }
-
-                    GDTparser.RenameAddItemsTagName();
-
-                    GDTparser.SaveDocumentToFile(GDTparser.finalXMLFileExportPath + "\\" + GDTparser.finalXMLFileName);
-
-                    // обработка КДТ
-                    if (condKDTHasMainDocument)
-                    {                        
-                        GTD_Parser KDTparser = new GTD_Parser(tmpFolder + "\\" + nameFolderKDT, "КДТ");
-                        if (condKDTHasAdditionalDocument)
-                            KDTparser.LoadAdditionalDocs();
-
-                        // проверка списка товаров для ГДТ и КДТ на соответствие
-                        if (CheckItemsListMissingDocuments(condItemsListGDTNeedsInject, condItemsListKDTNeedsInject,
-                            tmpFolder + "\\" + folderItemsListGDTName, tmpFolder + "\\" + nameFolderKDT + "\\" + folderItemsListKDTName))
-                            condItemsListKDTNeedsInject = true;
-
-                        // вставка данных для списка товаров
-                        if (condItemsListKDTNeedsInject)
-                        {
-                            if (!KDTparser.InitItemsList(folderItemsListKDTName))
-                                throw new Exception(string.Join(System.Environment.NewLine, KDTparser.errorGTDParser));
-
-                            KDTparser.AddItemsListData();
-                        }
-
-                        KDTparser.RenameAddItemsTagName();
-
-                        KDTparser.SaveDocumentToFile(Directory.GetParent(KDTparser.finalXMLFileExportPath) + "\\" + KDTparser.finalXMLFileName);
-
-
-                        if (String.Compare(KDTparser.DocumentNumber, GDTparser.DocumentNumber) != 0)
-                            KDTparser.warningGTDParser.Add("Номера основного листа ГДТ: " + GDTparser.DocumentNumber + " и основного листа КДТ: " + KDTparser.DocumentNumber + " не совпадают");
-
-                        // заполнение пустых полей в КДТ
-                        // ДОРАБОТАТЬ добавить условие наличия основного листа ГДТ документа
-                        KDTparser.FillKDTEmptyFields(GDTparser, condKDTHasAdditionalDocument);
-
-
-                        if (KDTparser.warningGTDParser.Count > 1)
-                        {
-                            _warningRecognizeResults = string.Join(System.Environment.NewLine, KDTparser.warningGTDParser);
-                            condAllRecognizedCorrect = false;
-                        }
-
-                        KDTparser = null;
-                    }
-                    
-
-
-                    if (GDTparser.warningGTDParser.Count > 1)
-                    {
-                        if (String.IsNullOrEmpty(_warningRecognizeResults))
-                            _warningRecognizeResults = string.Join(System.Environment.NewLine, GDTparser.warningGTDParser);
-                        else
-                        {
-                            _warningRecognizeResults += Environment.NewLine;
-                            _warningRecognizeResults += string.Join(System.Environment.NewLine, GDTparser.warningGTDParser);
-                        }
-                        condAllRecognizedCorrect = false;
-                    }
-                        
-
-                    GDTparser = null;
-                    
-                    //Directory.Delete(tmpFolder, true);
-                    
-                }                
 
                 //DeleteEmptyRows(@"E:\VS Pro\Hello (C#)\bin\Debug\HelloFiles\FCEExport");
 
@@ -516,7 +402,7 @@ namespace Hello
                             IImage bwImage = pageImageDocument.BlackWhiteImage;
 
 
-                            // нумерация нераспознанных страниц (для многостраничный документов)
+                            // pagination of unrecognized pages (for multi-page documents)
                             int pageIndex = page.SourceImageInfo.PageIndex;
                             int pageNumber;
 
