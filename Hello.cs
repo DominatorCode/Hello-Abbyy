@@ -20,6 +20,7 @@ using System.Xml.Linq;
 using System.Linq;
 using System.Globalization;
 using System.Reflection;
+using System.Drawing;
 
 namespace Hello
 {
@@ -363,6 +364,8 @@ namespace Hello
 
                 while (true)
                 {
+                    
+
                     if (String.IsNullOrEmpty(this.textBox1.Text))
                         exportFolder = samplesFolder + "\\FCEExport";
                     else
@@ -426,6 +429,11 @@ namespace Hello
                         }
                     }
 
+                    //Console.WriteLine(document.Pages[0].OriginalImagePath);
+                    //PictureBox pictureBox = new PictureBox();
+                    //pictureBox.Image = document.Pages[0].Image.BlackWhiteImage.;
+                   
+                    
                     CreateExportParameters();
                    
                     _processor.ExportDocument(document, exportFolder);
@@ -441,8 +449,33 @@ namespace Hello
                                  .First().Name;
                     string nameDocument = Path.GetFileNameWithoutExtension(myFile);
                     Directory.CreateDirectory(exportFolder + "\\visualeditorfiles");
-                    
+
                     //document.AsCustomStorage.SaveToFile(exportFolder + "\\visualeditorfiles\\" + nameDocument + ".mydoc");
+
+                    // экспорт изображений блоков
+
+                    int pagesCount = document.Pages.Count;
+                    for (int p = 0; p < pagesCount; p++)
+                    {
+                        int blocksCount = document.Pages[p].Blocks.Count;
+
+                        for (int i = 0; i < blocksCount - 1; i++)
+                        {
+                            IBlock block = document.Pages[p].Blocks.Item(i);
+
+                            if (block.Field != null)
+                            {
+                                // если блок - Таблица
+                                if (block.Field.Name.Equals("Table1"))
+                                {
+                                    ExportTablesCells(block, myFile, docDefinition.Name);
+                                }
+
+                                string fieldName = docDefinition.Name + "_" + block.Field.Name;
+                                SaveBlocks(block, myFile, fieldName);
+                            }
+                        }
+                    }
                     
 
                     Marshal.ReleaseComObject(docDefinition);
@@ -482,6 +515,51 @@ namespace Hello
 
 
                 UnloadEngine();
+            }
+        }
+
+        // сохраняет блоки в виде изображений
+        public void SaveBlocks(IBlock block, string filename, string fieldName)
+        {
+            Image image = Image.FromFile(exportFolder + "\\" + filename);
+
+            int left = block.Region.get_Left(0);
+            int right = block.Region.get_Right(0);
+            int top = block.Region.get_Top(0);
+            int bottom = block.Region.get_Bottom(0);
+            int width = right - left;
+            int height = bottom - top;
+
+            Bitmap bmp = new Bitmap(width, height);
+
+            Graphics canvas = Graphics.FromImage(bmp);
+
+            canvas.DrawImage(image,
+                            new Rectangle(0, 0, width, height),
+                            new Rectangle(left, top, width, height),
+                            GraphicsUnit.Pixel);
+
+            string path = exportFolder + "\\blocks\\" + Path.GetFileNameWithoutExtension(filename);
+            Directory.CreateDirectory(path);
+            bmp.Save(path + "\\" + fieldName + ".bmp");
+        }
+
+        // Экспортирует блоки ячеек таблицы в изображения
+        public void ExportTablesCells(IBlock block, string filename, string definitionName)
+        {
+            int rows = block.AsTableBlock().RowsCount;
+            int columns = block.AsTableBlock().BoundColumnsCount;
+
+            // начинаем с 1 - header, заканчиваем -1 - footer
+            for (int r = 1; r < rows - 1; r++)
+            {
+                for (int c = 0; c < columns; c++)
+                {
+                    ITableBlock table = block.AsTableBlock();
+
+                    string cellName = definitionName + "_Table_" + table.Cell[c, r].Field.Name + "_" + "col" + c + "_row" + r;
+                    SaveBlocks(table.Cell[c, r], filename, cellName);
+                }
             }
         }
 
