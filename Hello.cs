@@ -399,14 +399,15 @@ namespace Hello
                         {
                             // Couldn't find matching template for the image. In this sample this is an error.
                             // In other scenarios this might be normal
-                            Directory.CreateDirectory(exportFolder + "\\undefined");
+                            string undefinedFolder = exportFolder + "\\undefined";
+                            Directory.CreateDirectory(undefinedFolder);
                             IPage page = document.Pages[0];
                             IImageDocument pageImageDocument = page.ReadOnlyImage;
                             IImage bwImage = pageImageDocument.BlackWhiteImage;
 
+                            #region Numbering unrecognized pages
 
                             // нумерация нераспознанных страниц в многостраничном документе
-
                             int pageIndex = page.SourceImageInfo.PageIndex;
                             int pageNumber;
 
@@ -420,20 +421,24 @@ namespace Hello
                                 pageNumber = pageIndex;
                             }
 
+                            #endregion
+
                             string name = Path.GetFileNameWithoutExtension(page.OriginalImagePath);
                             IImage image = document.Pages[0].Image.BlackWhiteImage;
-                            image.WriteToFile(exportFolder + "\\undefined" + "\\" + name + "_p" + pageNumber + ".tif",
-                        ImageFileFormatEnum.IFF_Tif, null, ImageCompressionTypeEnum.ICT_CcittGroup4, null);
+
+                            image.WriteToFile(
+                                undefinedFolder + "\\" + name + "_p" + pageNumber + ".tif",
+                                ImageFileFormatEnum.IFF_Tif, 
+                                null, 
+                                ImageCompressionTypeEnum.ICT_CcittGroup4, 
+                                null);
+
                             _listErrorsDocumentRecognizing.Add("Не удалось распознать изображение: " + document.Pages[0].OriginalImagePath);
                             continue;
+                            
                         }
                     }
 
-                    //Console.WriteLine(document.Pages[0].OriginalImagePath);
-                    //PictureBox pictureBox = new PictureBox();
-                    //pictureBox.Image = document.Pages[0].Image.BlackWhiteImage.;
-                   
-                    
                     CreateExportParameters();
                    
                     _processor.ExportDocument(document, exportFolder);
@@ -452,7 +457,13 @@ namespace Hello
 
                     //document.AsCustomStorage.SaveToFile(exportFolder + "\\visualeditorfiles\\" + nameDocument + ".mydoc");
 
+                    #region Extract blocks
+
                     // экспорт изображений блоков
+                    trace("Extract the field image...");
+
+                    string fileDirectory = exportFolder + "\\blocks\\" + nameDocument;
+                    Directory.CreateDirectory(fileDirectory);
 
                     int pagesCount = document.Pages.Count;
                     for (int p = 0; p < pagesCount; p++)
@@ -461,22 +472,26 @@ namespace Hello
 
                         for (int i = 0; i < blocksCount - 1; i++)
                         {
-                            IBlock block = document.Pages[p].Blocks.Item(i);
+                            IPage page = document.Pages[p];
+                            IBlock block = page.Blocks.Item(i);
 
                             if (block.Field != null)
                             {
                                 // если блок - Таблица
                                 if (block.Field.Name.Equals("Table1"))
                                 {
-                                    ExportTablesCells(block, myFile, docDefinition.Name);
+                                    ExtractTableCells(page, block, docDefinition.Name, fileDirectory);
                                 }
-
-                                string fieldName = docDefinition.Name + "_" + block.Field.Name;
-                                SaveBlocks(block, myFile, fieldName);
+                                else
+                                {
+                                    string filename = docDefinition.Name + "_" + block.Field.Name + ".jpg";
+                                    ExtractBlock(page, block, filename, fileDirectory);
+                                }
                             }
                         }
                     }
-                    
+
+                    #endregion
 
                     Marshal.ReleaseComObject(docDefinition);
                     Marshal.ReleaseComObject(document);
@@ -485,80 +500,47 @@ namespace Hello
 
                     count++;                                     
                 }
-
-                // добавляем информацию о нераспознанных страницах
-                if (listDeclarationRecognizeErrors.Count > 0)
-                {
-                    if (String.IsNullOrEmpty(_warningRecognizeResults))
-                        _warningRecognizeResults = string.Join(System.Environment.NewLine, listDeclarationRecognizeErrors);
-                    else
-                    {
-                        _warningRecognizeResults += Environment.NewLine;
-                        _warningRecognizeResults += string.Join(System.Environment.NewLine, listDeclarationRecognizeErrors);
-                    }
-                }
-
-                // добавляем информацию о нерсапознанных листах декларации
-                if (listDeclarationRecognizeErrors.Count > 0)
-                {
-                    if (String.IsNullOrEmpty(_warningRecognizeResults))
-                        _warningRecognizeResults = string.Join(System.Environment.NewLine, listDeclarationRecognizeErrors);
-                    else
-                    {
-                        _warningRecognizeResults += Environment.NewLine;
-                        _warningRecognizeResults += string.Join(System.Environment.NewLine, listDeclarationRecognizeErrors);
-                    }
-                }
             }
             finally
             {
-
-
                 UnloadEngine();
             }
         }
 
-        // сохраняет блоки в виде изображений
-        public void SaveBlocks(IBlock block, string filename, string fieldName)
+        // извлекает блоки в изображения
+        public void ExtractBlock(IPage page, IBlock block, string filename, string fileDirectory)
         {
-            Image image = Image.FromFile(exportFolder + "\\" + filename);
+            IImageDocument pageImageDocument = page.ReadOnlyImage;
+            IImage bwImage = pageImageDocument.BlackWhiteImage;
 
-            int left = block.Region.get_Left(0);
-            int right = block.Region.get_Right(0);
-            int top = block.Region.get_Top(0);
-            int bottom = block.Region.get_Bottom(0);
-            int width = right - left;
-            int height = bottom - top;
+            IImageModification modification = _engine.CreateImageModification();
+            modification.ClipRegion = block.Region;
 
-            Bitmap bmp = new Bitmap(width, height);
-
-            Graphics canvas = Graphics.FromImage(bmp);
-
-            canvas.DrawImage(image,
-                            new Rectangle(0, 0, width, height),
-                            new Rectangle(left, top, width, height),
-                            GraphicsUnit.Pixel);
-
-            string path = exportFolder + "\\blocks\\" + Path.GetFileNameWithoutExtension(filename);
-            Directory.CreateDirectory(path);
-            bmp.Save(path + "\\" + fieldName + ".bmp");
+            bwImage.WriteToFile
+                (
+                    fileDirectory + "\\" + filename,
+                    ImageFileFormatEnum.IFF_Tif, 
+                    modification, 
+                    ImageCompressionTypeEnum.ICT_CcittGroup4, 
+                    null
+                );
         }
 
-        // Экспортирует блоки ячеек таблицы в изображения
-        public void ExportTablesCells(IBlock block, string filename, string definitionName)
+        // экспортирует блоки ячеек таблицы в изображения
+        public void ExtractTableCells(IPage page, IBlock block, string definitionName, string fileDirectory)
         {
             int rows = block.AsTableBlock().RowsCount;
             int columns = block.AsTableBlock().BoundColumnsCount;
 
-            // начинаем с 1 - header, заканчиваем -1 - footer
-            for (int r = 1; r < rows - 1; r++)
+            for (int c = 0; c < columns; c++)
             {
-                for (int c = 0; c < columns; c++)
+                for (int r = 0; r < rows; r++)
                 {
                     ITableBlock table = block.AsTableBlock();
-
-                    string cellName = definitionName + "_Table_" + table.Cell[c, r].Field.Name + "_" + "col" + c + "_row" + r;
-                    SaveBlocks(table.Cell[c, r], filename, cellName);
+                    IBlock cell = table.Cell[c, r];
+                    int pageNumber = page.Index + 1;
+                    string cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
+                    ExtractBlock(page, cell, cellName, fileDirectory);
                 }
             }
         }
