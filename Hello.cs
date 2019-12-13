@@ -529,20 +529,48 @@ namespace Hello
         // экспортирует блоки €чеек таблицы в изображени€
         public void ExtractTableCells(IPage page, IBlock block, string definitionName, string fileDirectory)
         {
-            int rows = block.AsTableBlock().RowsCount;
-            int columns = block.AsTableBlock().BoundColumnsCount;
+            ITableBlock table = block.AsTableBlock();
+            int rows = table.RowsCount;
+            int columns = table.BoundColumnsCount;
+
+            for (int r = 0; r < rows; r++)
+            {
+                if (!isSkip(table, r))
+                {
+                    for (int c = 0; c < columns; c++)
+                    {
+                        IBlock cell = table.Cell[c, r];
+
+                        int pageNumber = page.Index + 1;
+                        string cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
+                        ExtractBlock(page, cell, cellName, fileDirectory);
+                    }
+                }   
+            }
+        }
+
+        // провер€ет экспортировать ли €чейки р€да в изображени€
+        public bool isSkip(ITableBlock table, int row)
+        {
+            bool skip = false;
+
+            int columns = table.BoundColumnsCount;
 
             for (int c = 0; c < columns; c++)
             {
-                for (int r = 0; r < rows; r++)
+                IBlock cell = table.Cell[c, row];
+
+                if (cell.Field.Name.Equals("Descript"))
                 {
-                    ITableBlock table = block.AsTableBlock();
-                    IBlock cell = table.Cell[c, r];
-                    int pageNumber = page.Index + 1;
-                    string cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
-                    ExtractBlock(page, cell, cellName, fileDirectory);
+                    string text = cell.Field.Value.AsText.PlainText;
+                    if (text.Equals("0") || String.IsNullOrEmpty(text) || text.Length <= 3)
+                    {
+                        skip = true;
+                        break;
+                    }          
                 }
-            }
+            }      
+            return skip;
         }
 
         /// <summary>»нициализирует движок распознавани€ ABBYY</summary>
@@ -870,10 +898,6 @@ namespace Hello
         }
 
         
-
-        
-
-
 
         static string GetFieldValue(IDocument document, string fieldName)
         {
