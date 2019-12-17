@@ -426,12 +426,14 @@ namespace Hello
                             string name = Path.GetFileNameWithoutExtension(page.OriginalImagePath);
                             IImage image = document.Pages[0].Image.BlackWhiteImage;
 
+                            // + zalv_17-12-2019 - изменено наименование нераспознанного файла 
                             image.WriteToFile(
                                 undefinedFolder + "\\" + name + "_p" + pageNumber + ".tif",
                                 ImageFileFormatEnum.IFF_Tif, 
                                 null, 
                                 ImageCompressionTypeEnum.ICT_CcittGroup4, 
                                 null);
+                            // -
 
                             _listErrorsDocumentRecognizing.Add("Ќе удалось распознать изображение: " + document.Pages[0].OriginalImagePath);
                             continue;
@@ -541,20 +543,50 @@ namespace Hello
                     IBlock cell = table.Cell[c, r];
                     int pageNumber = page.Index + 1;
                     string cellName;
+                        
+                    if (cell.Field.Value.IsSuspicious)
+                    {
+                        
+                        IText text = cell.Field.Value.AsText;
                         /*
-                        if (cell.Field.Value.IsSuspicious)
+                        IRecognizedCharacterInfo charInfo = _engine.CreateRecognizedCharacterInfo();
+                        IRecognizedWordInfo wordInfo = _engine.CreateRecognizedWordInfo();
+                        
+                        for(int k = 0; k < wordInfo.RecognitionVariantsCount; k++)
                         {
-                            cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + "SUSP" + ".jpg";
+                            text.GetRecognizedWord(0, k, wordInfo);
+
+                            for (int i = 0; i < wordInfo.Text.Length; i++)
+                            {
+                                wordInfo.GetRecognizedCharacter(i, -1, charInfo);
+
+                                for (int j = 0; j < charInfo.RecognitionVariantsCount; j++)
+                                {
+                                    wordInfo.GetRecognizedCharacter(i, j, charInfo);
+                                }
+                            }
                         }
-                        else
+                        */
+
+                        ICharParams charParams = _engine.CreateCharParams();
+                        for (int i = 0; i < text.Length; i++)
                         {
-                            */
-                    cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
-                        //}
+                            text.GetCharParams(i, charParams);
+                            
+                        }
+
+                        
+
+                        cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + "_SUSP" + ".jpg";
+                    }
+                    else
+                    {
+
+                        cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
+                    }
                         
                     ExtractBlock(page, cell, cellName, fileDirectory);
-                }
-                //}   
+                } 
             }
         }
 
