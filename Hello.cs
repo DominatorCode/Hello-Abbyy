@@ -529,23 +529,32 @@ namespace Hello
         // экспортирует блоки €чеек таблицы в изображени€
         public void ExtractTableCells(IPage page, IBlock block, string definitionName, string fileDirectory)
         {
+            DeleteEmptyDescriptRow(block.Field);
             ITableBlock table = block.AsTableBlock();
             int rows = table.RowsCount;
             int columns = table.BoundColumnsCount;
 
             for (int r = 0; r < rows; r++)
             {
-                if (!isSkip(table, r))
+                for (int c = 0; c < columns; c++)
                 {
-                    for (int c = 0; c < columns; c++)
-                    {
-                        IBlock cell = table.Cell[c, r];
-
-                        int pageNumber = page.Index + 1;
-                        string cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
-                        ExtractBlock(page, cell, cellName, fileDirectory);
-                    }
-                }   
+                    IBlock cell = table.Cell[c, r];
+                    int pageNumber = page.Index + 1;
+                    string cellName;
+                        /*
+                        if (cell.Field.Value.IsSuspicious)
+                        {
+                            cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + "SUSP" + ".jpg";
+                        }
+                        else
+                        {
+                            */
+                    cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
+                        //}
+                        
+                    ExtractBlock(page, cell, cellName, fileDirectory);
+                }
+                //}   
             }
         }
 
@@ -571,6 +580,19 @@ namespace Hello
                 }
             }      
             return skip;
+        }
+
+        // удал€ет неверно вз€тый р€д таблицы
+        public void DeleteEmptyDescriptRow(IField field)
+        {
+            for(int i = 0; i < field.Instances.Count; i++)
+            {
+                string descript = recursiveFindField(field.Instances[i], "Descript").Value.AsString;
+                if (String.IsNullOrEmpty(descript) || descript.Length < 4 || descript.Equals("0"))
+                {
+                    field.Instances.DeleteAt(i);
+                }
+            }
         }
 
         /// <summary>»нициализирует движок распознавани€ ABBYY</summary>
