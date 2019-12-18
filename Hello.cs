@@ -1,4 +1,4 @@
-// © ABBYY. 2012.
+п»ї// В© ABBYY. 2012.
 // SAMPLES code is property of ABBYY, exclusive rights are reserved. 
 // DEVELOPER is allowed to incorporate SAMPLES into his own APPLICATION and modify it 
 // under the terms of License Agreement between ABBYY and DEVELOPER.
@@ -54,6 +54,9 @@ namespace Hello
         bool condKDTHasAdditionalDocument = false;
 
         bool condAllRecognizedCorrect = true;
+
+
+        int count = 0;
 
         string _warningRecognizeResults = "";
         List<string> _listErrorsDocumentRecognizing = new List<string>();
@@ -131,7 +134,7 @@ namespace Hello
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(155, 13);
             this.label1.TabIndex = 12;
-            this.label1.Text = "Укажите папку для экспорта";
+            this.label1.Text = "РЈРєР°Р¶РёС‚Рµ РїР°РїРєСѓ РґР»СЏ СЌРєСЃРїРѕСЂС‚Р°";
             // 
             // HelloForm
             // 
@@ -167,7 +170,7 @@ namespace Hello
                 processImages();
                 var test = GetImagesQualityInfo();
 
-                //RunExternalExe(@"E:\VS Pro\DocNet Visual Editor v12\bin\Release\DocNet Visual Editor v12.exe", @"E:\VS Pro\Hello (C#) v12\bin\Debug\HelloFiles\FCEExport\Акт2018-10-31_11-35-08.tif");            
+                //RunExternalExe(@"E:\VS Pro\DocNet Visual Editor v12\bin\Release\DocNet Visual Editor v12.exe", @"E:\VS Pro\Hello (C#) v12\bin\Debug\HelloFiles\FCEExport\РђРєС‚2018-10-31_11-35-08.tif");            
 
                 //DeleteEmptyRows(@"E:\VS Pro\Hello (C#)\bin\Debug\HelloFiles\FCEExport");
 
@@ -178,13 +181,13 @@ namespace Hello
                 if (!String.IsNullOrEmpty(errorsRecognize))
                     MessageBox.Show(errorsRecognize);
 
-                trace("Все в порядке");
+                trace("Р’СЃРµ РІ РїРѕСЂСЏРґРєРµ");
             }
             catch (Exception error)
             {
                 showError(error.Message);
                 MessageBox.Show(error.StackTrace);
-                trace("Сбой");
+                trace("РЎР±РѕР№");
             }
             finally
             {
@@ -206,7 +209,7 @@ namespace Hello
             IScanManager scanManager = _engine.CreateScanManager();
             IStringsCollection sources = scanManager.ScanSources;
 
-            string sourcesList = "Список сканеров: ";
+            string sourcesList = "РЎРїРёСЃРѕРє СЃРєР°РЅРµСЂРѕРІ: ";
             string samplesFolder = AppDomain.CurrentDomain.BaseDirectory + "HelloFiles";
             
             if (sources.Count > 0)
@@ -222,7 +225,7 @@ namespace Hello
             }
             else
             {
-                sourcesList = "Сканеры не найдены";
+                sourcesList = "РЎРєР°РЅРµСЂС‹ РЅРµ РЅР°Р№РґРµРЅС‹";
             }
             trace(sourcesList);
             // If at least one scan source found
@@ -275,7 +278,7 @@ namespace Hello
 
                 _imageLoadingParams.AutocorrectResolution = true;
 
-                // спорные настройки
+                // СЃРїРѕСЂРЅС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё
                 _imageLoadingParams.DiscardImageColor = true;
                 _imageLoadingParams.UseFastBinarization = true;
                 //_imageLoadingParams.ConvertToGray = true;
@@ -309,7 +312,7 @@ namespace Hello
                 string samplesFolder = AppDomain.CurrentDomain.BaseDirectory + "HelloFiles";
 
                 _processor = _engine.CreateFlexiCaptureProcessor();
-                // загружаем шаблоны
+                // Р·Р°РіСЂСѓР¶Р°РµРј С€Р°Р±Р»РѕРЅС‹
                 foreach (string file in Directory.EnumerateFiles(samplesFolder + @"\SampleProject\Templates", "*.fcdot"))
                 {
                     _processor.AddDocumentDefinitionFile(file);                                      
@@ -407,7 +410,7 @@ namespace Hello
 
                             #region Numbering unrecognized pages
 
-                            // нумерация нераспознанных страниц в многостраничном документе
+                            // РЅСѓРјРµСЂР°С†РёСЏ РЅРµСЂР°СЃРїРѕР·РЅР°РЅРЅС‹С… СЃС‚СЂР°РЅРёС† РІ РјРЅРѕРіРѕСЃС‚СЂР°РЅРёС‡РЅРѕРј РґРѕРєСѓРјРµРЅС‚Рµ
                             int pageIndex = page.SourceImageInfo.PageIndex;
                             int pageNumber;
 
@@ -426,7 +429,7 @@ namespace Hello
                             string name = Path.GetFileNameWithoutExtension(page.OriginalImagePath);
                             IImage image = document.Pages[0].Image.BlackWhiteImage;
 
-                            // + zalv_17-12-2019 - изменено наименование нераспознанного файла 
+                            // + zalv_17-12-2019 - РёР·РјРµРЅРµРЅРѕ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ РЅРµСЂР°СЃРїРѕР·РЅР°РЅРЅРѕРіРѕ С„Р°Р№Р»Р° 
                             image.WriteToFile(
                                 undefinedFolder + "\\" + name + "_p" + pageNumber + ".tif",
                                 ImageFileFormatEnum.IFF_Tif, 
@@ -435,7 +438,7 @@ namespace Hello
                                 null);
                             // -
 
-                            _listErrorsDocumentRecognizing.Add("Не удалось распознать изображение: " + document.Pages[0].OriginalImagePath);
+                            _listErrorsDocumentRecognizing.Add("РќРµ СѓРґР°Р»РѕСЃСЊ СЂР°СЃРїРѕР·РЅР°С‚СЊ РёР·РѕР±СЂР°Р¶РµРЅРёРµ: " + document.Pages[0].OriginalImagePath);
                             continue;
                             
                         }
@@ -445,11 +448,11 @@ namespace Hello
                    
                     _processor.ExportDocument(document, exportFolder);
 
-                    // если используется встроенный способ обработки изображений,
-                    // проверить их качество
+                    // РµСЃР»Рё РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІСЃС‚СЂРѕРµРЅРЅС‹Р№ СЃРїРѕСЃРѕР± РѕР±СЂР°Р±РѕС‚РєРё РёР·РѕР±СЂР°Р¶РµРЅРёР№,
+                    // РїСЂРѕРІРµСЂРёС‚СЊ РёС… РєР°С‡РµСЃС‚РІРѕ
                     if (!condUsingCustomImageSource)
                         CheckIsImageSuitableForOcr(document);
-                    // сериализация данных в отдельную папку
+                    // СЃРµСЂРёР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅС‹С… РІ РѕС‚РґРµР»СЊРЅСѓСЋ РїР°РїРєСѓ
                     var directory = new DirectoryInfo(exportFolder);
                     string myFile = directory.GetFiles()
                                  .OrderByDescending(f => f.LastWriteTime)
@@ -461,7 +464,7 @@ namespace Hello
 
                     #region Extract blocks
 
-                    // экспорт изображений блоков
+                    // СЌРєСЃРїРѕСЂС‚ РёР·РѕР±СЂР°Р¶РµРЅРёР№ Р±Р»РѕРєРѕРІ
                     trace("Extract the field image...");
 
                     string fileDirectory = exportFolder + "\\blocks\\" + nameDocument;
@@ -479,10 +482,10 @@ namespace Hello
 
                             if (block.Field != null)
                             {
-                                // если блок - Таблица
+                                // РµСЃР»Рё Р±Р»РѕРє - РўР°Р±Р»РёС†Р°
                                 if (block.Field.Name.Equals("Table1"))
                                 {
-                                    ExtractTableCells(page, block, docDefinition.Name, fileDirectory);
+                                    ExtractTableCells(page, block, docDefinition.Name, fileDirectory, directory + "\\" + myFile);
                                 }
                                 else
                                 {
@@ -509,7 +512,7 @@ namespace Hello
             }
         }
 
-        // извлекает блоки в изображения
+        // РёР·РІР»РµРєР°РµС‚ Р±Р»РѕРєРё РІ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
         public void ExtractBlock(IPage page, IBlock block, string filename, string fileDirectory)
         {
             IImageDocument pageImageDocument = page.ReadOnlyImage;
@@ -528,14 +531,56 @@ namespace Hello
                 );
         }
 
-        // экспортирует блоки ячеек таблицы в изображения
-        public void ExtractTableCells(IPage page, IBlock block, string definitionName, string fileDirectory)
+        public void ExtractSuspiciousSymbol(IRectangle rect, string directory, string filename, string symbolName)
+        {
+            int left = rect.Left;
+            int right = rect.Right;
+            int top = rect.Top;
+            int bottom = rect.Bottom;
+            int width = (right + 2) - left + 2;
+            int height = (bottom + 2) - top + 2;
+
+            //IImageDocument pageImageDocument = page.ReadOnlyImage;
+            Image image = Image.FromFile(filename);
+
+            Bitmap bmp = new Bitmap(width, height);
+
+            Graphics canvas = Graphics.FromImage(bmp);
+
+            canvas.DrawImage(image,
+                new Rectangle(2, 2, width, height),
+                new Rectangle(left - 1, top - 1, width, height),
+                GraphicsUnit.Pixel);
+
+            int dif = 1;
+            if (height > width)
+            {
+                dif = height / width;
+            }
+            else if (width > height)
+            {
+                dif = width / height;
+            }
+
+            bmp = ResizeImage(bmp, new Size(40, dif * 40));
+
+            bmp.Save(directory + "\\" + symbolName + ".jpg");
+        }
+
+        public Bitmap ResizeImage(Bitmap imgToResize, Size size) 
+        { 
+            return new Bitmap(imgToResize, size); 
+        }
+        
+
+        // СЌРєСЃРїРѕСЂС‚РёСЂСѓРµС‚ Р±Р»РѕРєРё СЏС‡РµРµРє С‚Р°Р±Р»РёС†С‹ РІ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
+        public void ExtractTableCells(IPage page, IBlock block, string definitionName, string fileDirectory, string filename)
         {
             DeleteEmptyDescriptRow(block.Field);
             ITableBlock table = block.AsTableBlock();
             int rows = table.RowsCount;
             int columns = table.BoundColumnsCount;
-
+            
             for (int r = 0; r < rows; r++)
             {
                 for (int c = 0; c < columns; c++)
@@ -546,51 +591,34 @@ namespace Hello
                         
                     if (cell.Field.Value.IsSuspicious)
                     {
-                        
                         IText text = cell.Field.Value.AsText;
-                        /*
-                        IRecognizedCharacterInfo charInfo = _engine.CreateRecognizedCharacterInfo();
-                        IRecognizedWordInfo wordInfo = _engine.CreateRecognizedWordInfo();
-                        
-                        for(int k = 0; k < wordInfo.RecognitionVariantsCount; k++)
-                        {
-                            text.GetRecognizedWord(0, k, wordInfo);
-
-                            for (int i = 0; i < wordInfo.Text.Length; i++)
-                            {
-                                wordInfo.GetRecognizedCharacter(i, -1, charInfo);
-
-                                for (int j = 0; j < charInfo.RecognitionVariantsCount; j++)
-                                {
-                                    wordInfo.GetRecognizedCharacter(i, j, charInfo);
-                                }
-                            }
-                        }
-                        */
-
                         ICharParams charParams = _engine.CreateCharParams();
+                        
                         for (int i = 0; i < text.Length; i++)
                         {
                             text.GetCharParams(i, charParams);
-                            
+                            if(charParams.IsSuspicious)
+                            {
+                                Console.WriteLine(text.Text[i]);
+                                string path = fileDirectory + "\\suspiciuos_symbols";
+                                Directory.CreateDirectory(path);
+                                string symbolName = "ss_" + i + "_" + cell.Field.Name + "_" + c + r + "_" + count; 
+                                ExtractSuspiciousSymbol(charParams.Rectangle, path, filename, symbolName);
+                                count++;
+                            }
                         }
-
-                        
-
-                        cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + "_SUSP" + ".jpg";
                     }
-                    else
-                    {
-
-                        cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
-                    }
+                    //else
+                    //{
+                    cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
+                    //}
                         
                     ExtractBlock(page, cell, cellName, fileDirectory);
                 } 
             }
         }
 
-        // проверяет экспортировать ли ячейки ряда в изображения
+        // РїСЂРѕРІРµСЂСЏРµС‚ СЌРєСЃРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ Р»Рё СЏС‡РµР№РєРё СЂСЏРґР° РІ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
         public bool isSkip(ITableBlock table, int row)
         {
             bool skip = false;
@@ -614,7 +642,7 @@ namespace Hello
             return skip;
         }
 
-        // удаляет неверно взятый ряд таблицы
+        // СѓРґР°Р»СЏРµС‚ РЅРµРІРµСЂРЅРѕ РІР·СЏС‚С‹Р№ СЂСЏРґ С‚Р°Р±Р»РёС†С‹
         public void DeleteEmptyDescriptRow(IField field)
         {
             for(int i = 0; i < field.Instances.Count; i++)
@@ -627,8 +655,8 @@ namespace Hello
             }
         }
 
-        /// <summary>Инициализирует движок распознавания ABBYY</summary>
-        /// <returns>Истина - движок загружен</returns>
+        /// <summary>РРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚ РґРІРёР¶РѕРє СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ ABBYY</summary>
+        /// <returns>РСЃС‚РёРЅР° - РґРІРёР¶РѕРє Р·Р°РіСЂСѓР¶РµРЅ</returns>
         public bool LoadEngine()
         {
             if (_engine != null)
@@ -638,7 +666,7 @@ namespace Hello
 
             try
             {
-                traceText += "Выбираем тип Loader";
+                traceText += "Р’С‹Р±РёСЂР°РµРј С‚РёРї Loader";
 
 
                 _engineLoader = new OutprocLoader();
@@ -646,7 +674,7 @@ namespace Hello
                 workProcess.SetParentProcessId(System.Diagnostics.Process.GetCurrentProcess().Id);
 
 
-                traceText += " ,загружаем движок _engineLoader.Load()";
+                traceText += " ,Р·Р°РіСЂСѓР¶Р°РµРј РґРІРёР¶РѕРє _engineLoader.Load()";
 
                 _engineLoader.CustomerProjectId = Seral;
                 _engineLoader.LicensePath = "";
@@ -657,19 +685,19 @@ namespace Hello
                 ILicense license = _engine.CurrentLicense;
                 if (!license.IsActivated)
                 {
-                    errorText = "Данная лицензия не активирована, либо вставлен неверный ключ.";
+                    errorText = "Р”Р°РЅРЅР°СЏ Р»РёС†РµРЅР·РёСЏ РЅРµ Р°РєС‚РёРІРёСЂРѕРІР°РЅР°, Р»РёР±Рѕ РІСЃС‚Р°РІР»РµРЅ РЅРµРІРµСЂРЅС‹Р№ РєР»СЋС‡.";
                     //MessageBox.Show(errorText);
                     UnloadEngine();
                     return false;
                 }
 
-                // если используется несколько лицензий подбираем ту
-                // у которой есть страницы
+                // РµСЃР»Рё РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РЅРµСЃРєРѕР»СЊРєРѕ Р»РёС†РµРЅР·РёР№ РїРѕРґР±РёСЂР°РµРј С‚Сѓ
+                // Сѓ РєРѕС‚РѕСЂРѕР№ РµСЃС‚СЊ СЃС‚СЂР°РЅРёС†С‹
                 if (license.RemainingUnits == 0)
                 {
                     if (!ChangeLicense())
                     {
-                        errorText = "Текущая лицензия имеет 0 страниц для распознавания, не удалось сменить лицензию на другую";
+                        errorText = "РўРµРєСѓС‰Р°СЏ Р»РёС†РµРЅР·РёСЏ РёРјРµРµС‚ 0 СЃС‚СЂР°РЅРёС† РґР»СЏ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ, РЅРµ СѓРґР°Р»РѕСЃСЊ СЃРјРµРЅРёС‚СЊ Р»РёС†РµРЅР·РёСЋ РЅР° РґСЂСѓРіСѓСЋ";
                         throw new Exception(errorText);
                     }
                 }
@@ -684,7 +712,7 @@ namespace Hello
                     case -2147221164:
                         {
                             errorText = "ABBYY FlexiCapture not registered in system with CLSID {C0003004-0000-48FF-9197-57B7554849BA}";
-                            errorText = errorText + Environment.NewLine + "Необходимо выполнить регистрацию программы (regsvr) в службе компонент";
+                            errorText = errorText + Environment.NewLine + "РќРµРѕР±С…РѕРґРёРјРѕ РІС‹РїРѕР»РЅРёС‚СЊ СЂРµРіРёСЃС‚СЂР°С†РёСЋ РїСЂРѕРіСЂР°РјРјС‹ (regsvr) РІ СЃР»СѓР¶Р±Рµ РєРѕРјРїРѕРЅРµРЅС‚";
                             //MessageBox.Show(errorText);
                             break;
                         }
@@ -704,7 +732,7 @@ namespace Hello
                     // To use LocalServer under a special account you must add this account to 
                     // the COM-object's launch permissions (using DCOMCNFG or OLE/COM object viewer)
                     errorText = "Launch permission for the work-process COM-object is not granted. Use DCOMCNFG to change security settings for the object. (" + e.Message + ")";
-                    errorText = errorText + Environment.NewLine + "Необходимо расширить права доступа для программы в службе компонент";
+                    errorText = errorText + Environment.NewLine + "РќРµРѕР±С…РѕРґРёРјРѕ СЂР°СЃС€РёСЂРёС‚СЊ РїСЂР°РІР° РґРѕСЃС‚СѓРїР° РґР»СЏ РїСЂРѕРіСЂР°РјРјС‹ РІ СЃР»СѓР¶Р±Рµ РєРѕРјРїРѕРЅРµРЅС‚";
                     //MessageBox.Show(errorText);
                     //throw new Exception(@"Launch permission for the work-process COM-object is not granted.
                     // Use DCOMCNFG to change security settings for the object. (" + e.Message + ")");
@@ -718,12 +746,12 @@ namespace Hello
                 return false;
             }
 
-            traceText += " ,движок загружен";
+            traceText += " ,РґРІРёР¶РѕРє Р·Р°РіСЂСѓР¶РµРЅ";
 
             return true;
         }
 
-        /// <summary>Выгружает движок распознавания ABBYY в системе</summary>
+        /// <summary>Р’С‹РіСЂСѓР¶Р°РµС‚ РґРІРёР¶РѕРє СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ ABBYY РІ СЃРёСЃС‚РµРјРµ</summary>
         public void UnloadEngine()
         {
             if (_engine != null)
@@ -799,7 +827,7 @@ namespace Hello
             exportFolder = this.textBox1.Text;
         }
 
-        // добавление дополнительной ячейки на 3й уровень для корректного чтения документа
+        // РґРѕР±Р°РІР»РµРЅРёРµ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕР№ СЏС‡РµР№РєРё РЅР° 3Р№ СѓСЂРѕРІРµРЅСЊ РґР»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‡С‚РµРЅРёСЏ РґРѕРєСѓРјРµРЅС‚Р°
         void AddRootNode(string paramPathExportFolder)
         {
             string[] xmlFiles = Directory.GetFiles(paramPathExportFolder, "*.xml");
@@ -810,13 +838,13 @@ namespace Hello
                 xmlDocument.Load(xmlFile);
                 XmlNode itemNodes = xmlDocument.DocumentElement.FirstChild;
 
-                // берем значение типа документа
+                // Р±РµСЂРµРј Р·РЅР°С‡РµРЅРёРµ С‚РёРїР° РґРѕРєСѓРјРµРЅС‚Р°
                 XmlNodeList nodeDocType = xmlDocument.GetElementsByTagName("_DocType");
                 string nameNodeNew = "";
                 if (nodeDocType.Count > 0)
                     nameNodeNew = nodeDocType[0].Value;
 
-                // проверка на наличие дополнителmной ячейки
+                // РїСЂРѕРІРµСЂРєР° РЅР° РЅР°Р»РёС‡РёРµ РґРѕРїРѕР»РЅРёС‚РµР»mРЅРѕР№ СЏС‡РµР№РєРё
                 XmlNodeList nodeDocTypeExists = null;
                 if (!String.IsNullOrEmpty(nameNodeNew))
                     nodeDocTypeExists = xmlDocument.GetElementsByTagName(nameNodeNew);
@@ -876,7 +904,7 @@ namespace Hello
                         {
                             itemNodes[i].ParentNode.RemoveChild(itemNodes[i]);
                         }
-                        else if (condTaxField) // вычисляем НДС входит в стоимость или нет
+                        else if (condTaxField) // РІС‹С‡РёСЃР»СЏРµРј РќР”РЎ РІС…РѕРґРёС‚ РІ СЃС‚РѕРёРјРѕСЃС‚СЊ РёР»Рё РЅРµС‚
                         {                           
                             double Price = 0;
                             double Qty = 0;
@@ -1016,7 +1044,7 @@ namespace Hello
                 string nameFinal = nameDocument + "_" + (numberPageCast + 1).ToString().PadLeft(5, '0');
                 if (File.Exists(nameFinal))
                 {
-                    _listErrorsDocumentRecognizing.Add("Листы для декларации возможно перепутаны");
+                    _listErrorsDocumentRecognizing.Add("Р›РёСЃС‚С‹ РґР»СЏ РґРµРєР»Р°СЂР°С†РёРё РІРѕР·РјРѕР¶РЅРѕ РїРµСЂРµРїСѓС‚Р°РЅС‹");
                     Random rnd = new Random();
                     int rndnumber = rnd.Next(999);
                     return nameFinal + "_" + rndnumber;
@@ -1048,7 +1076,7 @@ namespace Hello
                     }
                     catch (Exception Ex)
                     {
-                        _errorText = "Не удалось сменить лицензию: " + Ex.Message;
+                        _errorText = "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРјРµРЅРёС‚СЊ Р»РёС†РµРЅР·РёСЋ: " + Ex.Message;
                         throw new Exception(_errorText);
                     }
 
@@ -1064,13 +1092,13 @@ namespace Hello
 
         bool CheckItemsListMissingDocuments(bool condILGTD, bool condILKDT, string pathILGDT, string pathILKDT)
         {
-            // если у КДТ отсутствуют свои листы
-            // копируем у ГДТ
+            // РµСЃР»Рё Сѓ РљР”Рў РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚ СЃРІРѕРё Р»РёСЃС‚С‹
+            // РєРѕРїРёСЂСѓРµРј Сѓ Р“Р”Рў
             if (condILGTD & !condILKDT) 
             {
                 Directory.CreateDirectory(pathILKDT);
 
-                // копируем все файлы
+                // РєРѕРїРёСЂСѓРµРј РІСЃРµ С„Р°Р№Р»С‹
                 foreach (string newPath in Directory.GetFiles(pathILGDT, "*.*",
                     SearchOption.AllDirectories))
                     File.Copy(newPath, newPath.Replace(pathILGDT, pathILKDT), true);
@@ -1102,7 +1130,7 @@ namespace Hello
             }
             catch (Exception ex)
             {
-                _errorText = "Ошибка запуска внешнего exe: " + ex.Message + Environment.NewLine + ex.StackTrace;
+                _errorText = "РћС€РёР±РєР° Р·Р°РїСѓСЃРєР° РІРЅРµС€РЅРµРіРѕ exe: " + ex.Message + Environment.NewLine + ex.StackTrace;
                 throw new Exception(_errorText);
             }
         }
@@ -1149,7 +1177,7 @@ namespace Hello
         public string GetSingleTemplateVersion(string pathFileTemplate)
         {
             if (_engine == null)
-                throw new Exception("Движок FlexiCapture не инициализирован");
+                throw new Exception("Р”РІРёР¶РѕРє FlexiCapture РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ");
             if (!File.Exists(pathFileTemplate))
                 return "";
 
@@ -1169,7 +1197,7 @@ namespace Hello
                 documentDefinition.LoadFromFile(pathFileTemplate);
                 IStringsCollection collectionClasses = documentDefinition.GetClassNames();
                
-                return collectionClasses.ToString() + " версия ";*/
+                return collectionClasses.ToString() + " РІРµСЂСЃРёСЏ ";*/
                 return "";
             }
 
@@ -1180,7 +1208,7 @@ namespace Hello
         {
             if (String.IsNullOrEmpty(_pathDirectoryTemplates))
             {
-                _errorText = "ERROR: FC_Recognize: GetTemplateVersion: " + Environment.NewLine + "Не задан путь к директории с шаблонами";
+                _errorText = "ERROR: FC_Recognize: GetTemplateVersion: " + Environment.NewLine + "РќРµ Р·Р°РґР°РЅ РїСѓС‚СЊ Рє РґРёСЂРµРєС‚РѕСЂРёРё СЃ С€Р°Р±Р»РѕРЅР°РјРё";
                 throw new Exception(_errorText);
             }
 
@@ -1213,7 +1241,7 @@ namespace Hello
         {
             pathDirectoryTemplates = pathDirectoryTemplates + "\\Templates";
             if (!Directory.Exists(pathDirectoryTemplates))
-                throw new Exception("Директория отсутствует: " + pathDirectoryTemplates);
+                throw new Exception("Р”РёСЂРµРєС‚РѕСЂРёСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚: " + pathDirectoryTemplates);
 
             _pathDirectoryTemplates = pathDirectoryTemplates;
         }
@@ -1237,7 +1265,7 @@ namespace Hello
                 }
                 catch (Exception ex)
                 {
-                    AppParameters.TextError.Add("SetLoggingPath: Не удалось создать директорию: " + pathDirectoryFileLogging + Environment.NewLine + ex.Message);
+                    AppParameters.TextError.Add("SetLoggingPath: РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ РґРёСЂРµРєС‚РѕСЂРёСЋ: " + pathDirectoryFileLogging + Environment.NewLine + ex.Message);
                     return false;
                 }
             }
@@ -1250,7 +1278,7 @@ namespace Hello
             }
             catch (UnauthorizedAccessException)
             {
-                AppParameters.TextError.Add("Нет прав на запись у директории: " + pathDirectoryFileLogging);
+                AppParameters.TextError.Add("РќРµС‚ РїСЂР°РІ РЅР° Р·Р°РїРёСЃСЊ Сѓ РґРёСЂРµРєС‚РѕСЂРёРё: " + pathDirectoryFileLogging);
                 return false;
             }
 
@@ -1282,7 +1310,7 @@ namespace Hello
 
         public string GetImagesQualityInfo()
         {
-            AppParameters._listInfoQualityImages.Add("Необходимо настроить сканер для повышения точности распознавания документов");
+            AppParameters._listInfoQualityImages.Add("РќРµРѕР±С…РѕРґРёРјРѕ РЅР°СЃС‚СЂРѕРёС‚СЊ СЃРєР°РЅРµСЂ РґР»СЏ РїРѕРІС‹С€РµРЅРёСЏ С‚РѕС‡РЅРѕСЃС‚Рё СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ РґРѕРєСѓРјРµРЅС‚РѕРІ");
 
             if (!String.IsNullOrEmpty(AppParameters._warnColorTypeBad))
             {
@@ -1310,8 +1338,8 @@ namespace Hello
             return infoOCR;
         }
 
-        /// <summary>Проверяет, что изображение не цветное и имеет разрешение 300 dpi</summary>
-        /// <param name="pDocument">Распознанный документ</param>
+        /// <summary>РџСЂРѕРІРµСЂСЏРµС‚, С‡С‚Рѕ РёР·РѕР±СЂР°Р¶РµРЅРёРµ РЅРµ С†РІРµС‚РЅРѕРµ Рё РёРјРµРµС‚ СЂР°Р·СЂРµС€РµРЅРёРµ 300 dpi</summary>
+        /// <param name="pDocument">Р Р°СЃРїРѕР·РЅР°РЅРЅС‹Р№ РґРѕРєСѓРјРµРЅС‚</param>
         void CheckIsImageSuitableForOcr(IDocument pDocument)
         {
             
@@ -1323,8 +1351,8 @@ namespace Hello
                     if (pDocument.Pages[0].Image.SourceImageXResolution < 300 || pDocument.Pages[0].Image.SourceImageYResolution < 300)
                     {
                         AppParameters._isSuitableForOcr = false;
-                        AppParameters._warnResolutionImageBad = "Оптимальное разрешение сканера для распознавания должно быть от 300 dpi" + Environment.NewLine +
-                           "Так же проверьте цветовой режим сканера, оптимальный - оттенки серого или черно-белый";
+                        AppParameters._warnResolutionImageBad = "РћРїС‚РёРјР°Р»СЊРЅРѕРµ СЂР°Р·СЂРµС€РµРЅРёРµ СЃРєР°РЅРµСЂР° РґР»СЏ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РѕС‚ 300 dpi" + Environment.NewLine +
+                           "РўР°Рє Р¶Рµ РїСЂРѕРІРµСЂСЊС‚Рµ С†РІРµС‚РѕРІРѕР№ СЂРµР¶РёРј СЃРєР°РЅРµСЂР°, РѕРїС‚РёРјР°Р»СЊРЅС‹Р№ - РѕС‚С‚РµРЅРєРё СЃРµСЂРѕРіРѕ РёР»Рё С‡РµСЂРЅРѕ-Р±РµР»С‹Р№";
                     }                                          
             }
         }
