@@ -540,7 +540,7 @@ namespace Hello
                     }
                     else {
                         docDefinition = document.DocumentDefinition;
-
+                        // НОВАЯ ВЕТВЬ
                         if (docDefinition == null)
                         {
                             // Couldn't find matching template for the image. In this sample this is an error.
