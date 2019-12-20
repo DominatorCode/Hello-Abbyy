@@ -540,7 +540,7 @@ namespace Hello
                     }
                     else {
                         docDefinition = document.DocumentDefinition;
-
+                        // НОВАЯ ВЕТВЬ
                         if (docDefinition == null)
                         {
                             // Couldn't find matching template for the image. In this sample this is an error.
@@ -549,10 +549,35 @@ namespace Hello
                             IPage page = document.Pages[0];
                             IImageDocument pageImageDocument = page.ReadOnlyImage;
                             IImage bwImage = pageImageDocument.BlackWhiteImage;
+
+                            #region Numbering unrecognized pages
+
+                            // нумерация нераспознанных страниц в многостраничном документе
+                            int pageIndex = page.SourceImageInfo.PageIndex;
+                            int pageNumber;
+
+                            if (pageIndex == 0)
+                            {
+                                pageNumber = 1;
+                            }
+                            else
+                            {
+                                pageIndex++;
+                                pageNumber = pageIndex;
+                            }
+
+                            #endregion
+
                             string name = Path.GetFileNameWithoutExtension(page.OriginalImagePath);
                             IImage image = document.Pages[0].Image.BlackWhiteImage;
-                            image.WriteToFile(exportFolder + "\\undefined" + "\\" + name + "_" + DateTime.Now.Millisecond + ".tif",
-                        ImageFileFormatEnum.IFF_Tif, null, ImageCompressionTypeEnum.ICT_CcittGroup4, null);
+
+                            // изменено наименование файла
+                            image.WriteToFile(
+                                exportFolder + "\\undefined" + "\\" + name + "_p" + pageNumber + ".tif",
+                                ImageFileFormatEnum.IFF_Tif, 
+                                null, 
+                                ImageCompressionTypeEnum.ICT_CcittGroup4, 
+                                null);
                             _listErrorsDocumentRecognizing.Add("Не удалось распознать изображение: " + document.Pages[0].OriginalImagePath);
                             continue;
                         }
