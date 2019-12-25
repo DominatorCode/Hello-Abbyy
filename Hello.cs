@@ -899,7 +899,7 @@ namespace Hello
                                 string path = fileDirectory + "\\suspiciuos_symbols";
                                 Directory.CreateDirectory(path);
                                 string symbolName = "ss_" + i + "_" + cell.Field.Name + "_" + c + r + "_" + count;
-                                ExtractSuspiciousSymbol(charParams.Rectangle, path, filename, symbolName);
+                                //ExtractSuspiciousSymbol(charParams.Rectangle, path, filename, symbolName);
                                 count++;
                             }
                         }
