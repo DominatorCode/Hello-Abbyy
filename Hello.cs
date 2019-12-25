@@ -763,7 +763,6 @@ namespace Hello
 
                     #endregion
 
-
                     Marshal.ReleaseComObject(docDefinition);
                     Marshal.ReleaseComObject(document);
                     
@@ -904,7 +903,7 @@ namespace Hello
                             }
                         }
                     }
-                    
+
                     cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
 
                     ExtractBlock(page, cell, cellName, fileDirectory);
@@ -945,6 +944,8 @@ namespace Hello
                 }
             }
         }
+
+
 
         /// <summary>Инициализирует движок распознавания ABBYY</summary>
         /// <returns>Истина - движок загружен</returns>
