@@ -556,18 +556,8 @@ namespace Hello
 
                             // нумерация нераспознанных страниц в многостраничном документе
                             int pageIndex = page.SourceImageInfo.PageIndex;
-                            int pageNumber;
-
-                            if (pageIndex == 0)
-                            {
-                                pageNumber = 1;
-                            }
-                            else
-                            {
-                                pageIndex++;
-                                pageNumber = pageIndex;
-                            }
-
+                            int pageNumber = pageIndex + 1;
+                      
                             #endregion
 
                             string name = Path.GetFileNameWithoutExtension(page.OriginalImagePath);
@@ -733,12 +723,14 @@ namespace Hello
                     // экспорт изображений блоков
                     trace("Extract the field image...");
 
+                    // создаем папку куда будут экспортироваться изображения блоков
                     string fileDirectory = exportFolder + "\\blocks\\" + nameDocument;
                     Directory.CreateDirectory(fileDirectory);
 
                     int pagesCount = document.Pages.Count;
                     for (int p = 0; p < pagesCount; p++)
                     {
+                        // подсчитываем количество блоков на текущей странице
                         int blocksCount = document.Pages[p].Blocks.Count;
 
                         for (int i = 0; i < blocksCount - 1; i++)
@@ -751,6 +743,7 @@ namespace Hello
                                 // если блок - Таблица
                                 if (block.Field.Name.Equals("Table1"))
                                 {
+                                    // извлекаем изображения ячеек таблицы
                                     ExtractTableCells(page, block, docDefinition.Name, fileDirectory, directory + "\\" + myFile);
                                 }
                                 else
@@ -834,7 +827,6 @@ namespace Hello
             int width = (right + 2) - left + 2;
             int height = (bottom + 2) - top + 2;
 
-            //IImageDocument pageImageDocument = page.ReadOnlyImage;
             Image image = Image.FromFile(filename);
 
             Bitmap bmp = new Bitmap(width, height);
@@ -861,6 +853,7 @@ namespace Hello
             bmp.Save(directory + "\\" + symbolName + ".jpg");
         }
 
+        // изменяет размер изображения
         public Bitmap ResizeImage(Bitmap imgToResize, Size size)
         {
             return new Bitmap(imgToResize, size);
@@ -869,20 +862,32 @@ namespace Hello
         // экспортирует блоки ячеек таблицы в изображения
         public void ExtractTableCells(IPage page, IBlock block, string definitionName, string fileDirectory, string filename)
         {
+            // удаляет лишние строки таблицы
             DeleteEmptyDescriptRow(block.Field);
+
+            // берем блок как таблицу
             ITableBlock table = block.AsTableBlock();
+
+            // подсчитываем количетсво строк в таблице
             int rows = table.RowsCount;
+            // подсчитываем количество колонок в таблице
             int columns = table.BoundColumnsCount;
 
-
+            // проходим по каждой строке таблицы
             for (int r = 0; r < rows; r++)
             {
+                // проходим по каждому столбцу в строке
                 for (int c = 0; c < columns; c++)
                 {
+                    // берем ячейку по индексу колонки и строки
                     IBlock cell = table.Cell[c, r];
+
+                    // получаем номер страницы
                     int pageNumber = page.Index + 1;
                     string cellName;
 
+                    // проверка на неверно распознанные символы
+                    /*
                     if (cell.Field.Value.IsSuspicious)
                     {
 
@@ -899,15 +904,17 @@ namespace Hello
                                 Console.WriteLine(text.Text[i]);
                                 string path = fileDirectory + "\\suspiciuos_symbols";
                                 Directory.CreateDirectory(path);
-                                string symbolName = "ss_" + i + "_" + cell.Field.Name + "_" + c + r + "_" + count;
+                                //string symbolName = "ss_" + i + "_" + cell.Field.Name + "_" + c + r + "_" + count;
                                 //ExtractSuspiciousSymbol(charParams.Rectangle, path, filename, symbolName);
                                 count++;
                             }
                         }
                     }
+                    */
 
                     cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
 
+                    // экспортируем блок ячейки в изображение
                     ExtractBlock(page, cell, cellName, fileDirectory);
                 }
             }
@@ -939,9 +946,13 @@ namespace Hello
         {
             for (int i = 0; i < field.Instances.Count; i++)
             {
+                // берем значение поля Descript
                 string descript = recursiveFindField(field.Instances[i], "Descript").Value.AsString;
+
+                // если поле Descript пустое, равно 0 или количество символов меньше 4...
                 if (String.IsNullOrEmpty(descript) || descript.Length < 4 || descript.Equals("0"))
                 {
+                    // то удаляем строку
                     field.Instances.DeleteAt(i);
                 }
             }
