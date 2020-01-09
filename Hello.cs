@@ -588,6 +588,8 @@ namespace Hello
 
 
                     CreateExportParameters();
+
+                    #region GTD
                     // Если это ГДТ основной лист
                     if (docDefinition.GUID == "6aed93a3-9383-42cd-9296-10c1befdd318")
                     {
@@ -712,7 +714,8 @@ namespace Hello
                     else
                         _processor.ExportDocument(document, exportFolder);
 
-                    
+                    #endregion
+
                     // если используется встроенный способ обработки изображений,
                     // проверить их качество
                     if (!condUsingCustomImageSource)
@@ -765,13 +768,10 @@ namespace Hello
 
                     Marshal.ReleaseComObject(docDefinition);
                     Marshal.ReleaseComObject(document);
-                    
-
+                     
                     DeleteEmptyRows(exportFolder);
 
-                    count++;
-
-                                                            
+                    count++;                                        
                 }
 
                 // добавляем информацию о нераспознанных страницах
@@ -805,6 +805,8 @@ namespace Hello
                 UnloadEngine();
             }
         }
+
+        
 
         // извлекает блоки в изображения
         public void ExtractBlock(IPage page, IBlock block, string filename, string fileDirectory)
