@@ -587,7 +587,7 @@ namespace Hello
 
 
 
-                    CreateExportParameters();
+                    //CreateExportParameters();
 
                     #region GTD
                     // Если это ГДТ основной лист
@@ -800,67 +800,78 @@ namespace Hello
             }
             finally
             {
-
-
                 UnloadEngine();
             }
         }
 
-        
 
         // извлекает блоки в изображения
         public void ExtractBlock(IPage page, IBlock block, string filename, string fileDirectory)
         {
             IImageDocument pageImageDocument = page.ReadOnlyImage;
             IImage bwImage = pageImageDocument.BlackWhiteImage;
+            // выделяем нужный блок
             IImageModification modification = _engine.CreateImageModification();
             modification.ClipRegion = block.Region;
-            bwImage.WriteToFile
-                (
+            // сохраняем изображение с блоком
+            bwImage.WriteToFile(
                     fileDirectory + "\\" + filename,
                     ImageFileFormatEnum.IFF_Tif,
                     modification,
                     ImageCompressionTypeEnum.ICT_CcittGroup4,
-                    null
-                );
+                    null);
         }
 
-        public void ExtractSuspiciousSymbol(IRectangle rect, string directory, string filename, string symbolName)
+        // экспортирует неверно распознанные символы в отдельные изображения
+        public void ExtractSuspiciousSymbol(IRectangle rect, string directory, string symbolName, IPage page)
         {
+            IImageDocument pageImageDocument = page.ReadOnlyImage;
+            IImage bwImage = pageImageDocument.BlackWhiteImage;
+
+            // создаем папку для хранения страниц документа
+            string pagesDir = directory + "\\pages";
+            Directory.CreateDirectory(pagesDir);
+
+            // присваиваем имя изображению и проверяем наличие уже существующего файла
+            string name = page.Index + ".tif";
+            // если файла нет, то создаем
+            if (!File.Exists(pagesDir + "\\" + name))
+                bwImage.WriteToFile(pagesDir + "\\" + name, ImageFileFormatEnum.IFF_Tif, null, ImageCompressionTypeEnum.ICT_CcittGroup4, null);
+            
+            // получаем координаты символа
             int left = rect.Left;
             int right = rect.Right;
             int top = rect.Top;
             int bottom = rect.Bottom;
+            // рассчитываем ширину и высоту (со смещением, чтобы символ не обрезался)
             int width = (right + 2) - left + 2;
             int height = (bottom + 2) - top + 2;
 
-            //IImageDocument pageImageDocument = page.ReadOnlyImage;
-            Image image = Image.FromFile(filename);
-
+            // получаем изображение
+            Image image = Image.FromFile(pagesDir + "\\" + name);
             Bitmap bmp = new Bitmap(width, height);
-
             Graphics canvas = Graphics.FromImage(bmp);
-
-            canvas.DrawImage(image,
+            canvas.DrawImage(
+                image,
                 new Rectangle(2, 2, width, height),
                 new Rectangle(left - 1, top - 1, width, height),
                 GraphicsUnit.Pixel);
 
+            // высчитываем пропорции
             int dif = 1;
+
             if (height > width)
-            {
                 dif = height / width;
-            }
             else if (width > height)
-            {
                 dif = width / height;
-            }
 
-            bmp = ResizeImage(bmp, new Size(40, dif * 40));
-
+            // изменяем размер изображения с сохранение пропорций
+            bmp = ResizeImage(bmp, new Size(64, dif * 64));
+            // сохраняем изображение
             bmp.Save(directory + "\\" + symbolName + ".jpg");
         }
 
+        // изменяет размер изображения
         public Bitmap ResizeImage(Bitmap imgToResize, Size size)
         {
             return new Bitmap(imgToResize, size);
@@ -869,45 +880,54 @@ namespace Hello
         // экспортирует блоки ячеек таблицы в изображения
         public void ExtractTableCells(IPage page, IBlock block, string definitionName, string fileDirectory, string filename)
         {
+            // удаляем лишние строки таблицы
             DeleteEmptyDescriptRow(block.Field);
+            //берем блок как таблицу
             ITableBlock table = block.AsTableBlock();
+
+            // подсчитываем количество строк и столбцов
             int rows = table.RowsCount;
             int columns = table.BoundColumnsCount;
 
-
+            // проходим по всем строкам таблицы
             for (int r = 0; r < rows; r++)
             {
+                // проходим по всем столбцам таблицы
                 for (int c = 0; c < columns; c++)
                 {
                     IBlock cell = table.Cell[c, r];
                     int pageNumber = page.Index + 1;
-                    string cellName;
 
+                    // если ячейка имеет неверно распознанные символы
                     if (cell.Field.Value.IsSuspicious)
                     {
-
+                        // берем значения ячейки как текст
                         IText text = cell.Field.Value.AsText;
-
                         ICharParams charParams = _engine.CreateCharParams();
 
+                        // проходим по всем символам текста в ячейке
                         for (int i = 0; i < text.Length; i++)
                         {
                             text.GetCharParams(i, charParams);
-
-                            if (charParams.IsSuspicious)
+                            // если символ распознан неверно и он не пробел
+                            if (charParams.IsSuspicious && !Char.IsWhiteSpace(text.Text[i]))
                             {
                                 Console.WriteLine(text.Text[i]);
+                                // создаем директорию с неверно распознанными символами
                                 string path = fileDirectory + "\\suspiciuos_symbols";
                                 Directory.CreateDirectory(path);
+
+                                // присваиваем символу имя
                                 string symbolName = "ss_" + i + "_" + cell.Field.Name + "_" + c + r + "_" + count;
-                                //ExtractSuspiciousSymbol(charParams.Rectangle, path, filename, symbolName);
+                                // извлекаем символ
+                                ExtractSuspiciousSymbol(charParams.Rectangle, path, symbolName, page);
                                 count++;
                             }
                         }
                     }
-
-                    cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
-
+                    // присваиваем ячейке имя
+                    string cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
+                    // экспортируем ячейку
                     ExtractBlock(page, cell, cellName, fileDirectory);
                 }
             }
