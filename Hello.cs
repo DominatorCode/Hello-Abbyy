@@ -585,8 +585,6 @@ namespace Hello
                         }
                     }
 
-
-
                     //CreateExportParameters();
 
                     #region GTD
@@ -711,15 +709,63 @@ namespace Hello
                             }
                         }
                     }
-                    else
-                        _processor.ExportDocument(document, exportFolder);
 
                     #endregion
+                    else
+                    {
+                        #region Extract blocks
+
+                        string name = Path.GetFileNameWithoutExtension(document.Pages[0].OriginalImagePath);
+                        //string n = document.AsField.Name; // UPD
+                        
+                        trace("Extract the field image...");
+
+                        // создаем директорию с блоками
+                        string fileDirectory = exportFolder + "\\blocks\\" + name;
+                        Directory.CreateDirectory(fileDirectory);
+
+                        // получаем количество страниц
+                        int pagesCount = document.Pages.Count;
+                        for (int p = 0; p < pagesCount; p++)
+                        {
+                            IPage page = document.Pages[p];
+                            // получаем количество блоков на странице
+                            int blocksCount = document.Pages[p].Blocks.Count;
+                            for (int i = 0; i < blocksCount - 1; i++)
+                            {
+                                IBlock block = page.Blocks.Item(i);
+                                // если блок не найден, то пропускаем
+                                if (block.Field == null)
+                                    continue;
+
+                                // получаем имя блока
+                                string blockName = block.Field.Name;
+                                string filename = blockName + ".jpg";
+
+                                // если блок - Таблица
+                                if (blockName.Equals("Table1"))
+                                    ExtractTableCells(page, block, fileDirectory);
+                                else
+                                    ExtractBlock(page, block, filename, fileDirectory);
+                            }
+                        }
+
+                        #endregion
+
+                        // экспортируем документ
+                        // оригинальные файлы сохраняем в формате .tiff
+                        document.DocumentDefinition.ExportParams.FileExportParams.ImageExportParams.Format = ImageFileFormatEnum.IFF_Tif;
+                        _processor.ExportDocument(document, exportFolder);
+                        // оригинальные файлы сохраняем в формате .pdf
+                        document.DocumentDefinition.ExportParams.FileExportParams.ImageExportParams.Format = ImageFileFormatEnum.IFF_Pdf;
+                        document.DocumentDefinition.ExportParams.FileExportParams.FileOverwriteRule = FileOverwriteRuleEnum.FOR_Replace;
+                        _processor.ExportDocument(document, exportFolder);
+                    }
 
                     // если используется встроенный способ обработки изображений,
                     // проверить их качество
                     if (!condUsingCustomImageSource)
-                        CheckIsImageSuitableForOcr(document);
+                            CheckIsImageSuitableForOcr(document);
                     // сериализация данных в отдельную папку
                     var directory = new DirectoryInfo(exportFolder);
                     string myFile = directory.GetFiles()
@@ -727,44 +773,7 @@ namespace Hello
                                  .First().Name;
                     string nameDocument = Path.GetFileNameWithoutExtension(myFile);
                     Directory.CreateDirectory(exportFolder + "\\visualeditorfiles");
-
-                    //document.AsCustomStorage.SaveToFile(exportFolder + "\\visualeditorfiles\\" + nameDocument + ".mydoc");
-
-                    #region Extract blocks
-
-                    // экспорт изображений блоков
-                    trace("Extract the field image...");
-
-                    string fileDirectory = exportFolder + "\\blocks\\" + nameDocument;
-                    Directory.CreateDirectory(fileDirectory);
-
-                    int pagesCount = document.Pages.Count;
-                    for (int p = 0; p < pagesCount; p++)
-                    {
-                        int blocksCount = document.Pages[p].Blocks.Count;
-
-                        for (int i = 0; i < blocksCount - 1; i++)
-                        {
-                            IPage page = document.Pages[p];
-                            IBlock block = page.Blocks.Item(i);
-
-                            if (block.Field != null)
-                            {
-                                // если блок - Таблица
-                                if (block.Field.Name.Equals("Table1"))
-                                {
-                                    ExtractTableCells(page, block, docDefinition.Name, fileDirectory, directory + "\\" + myFile);
-                                }
-                                else
-                                {
-                                    string filename = docDefinition.Name + "_" + block.Field.Name + ".jpg";
-                                    ExtractBlock(page, block, filename, fileDirectory);
-                                }
-                            }
-                        }
-                    }
-
-                    #endregion
+                        //document.AsCustomStorage.SaveToFile(exportFolder + "\\visualeditorfiles\\" + nameDocument + ".mydoc");
 
                     Marshal.ReleaseComObject(docDefinition);
                     Marshal.ReleaseComObject(document);
@@ -804,7 +813,7 @@ namespace Hello
             }
         }
 
-
+        
         // извлекает блоки в изображения
         public void ExtractBlock(IPage page, IBlock block, string filename, string fileDirectory)
         {
@@ -820,6 +829,8 @@ namespace Hello
                     modification,
                     ImageCompressionTypeEnum.ICT_CcittGroup4,
                     null);
+            // проверяем блок на наличие неуверенных символов
+            CheckSuspicious(page, block, fileDirectory);
         }
 
         // экспортирует неверно распознанные символы в отдельные изображения
@@ -833,7 +844,7 @@ namespace Hello
             Directory.CreateDirectory(pagesDir);
 
             // присваиваем имя изображению и проверяем наличие уже существующего файла
-            string name = page.Index + ".tif";
+            string name = "page_" + page.Index + ".tif";
             // если файла нет, то создаем
             if (!File.Exists(pagesDir + "\\" + name))
                 bwImage.WriteToFile(pagesDir + "\\" + name, ImageFileFormatEnum.IFF_Tif, null, ImageCompressionTypeEnum.ICT_CcittGroup4, null);
@@ -843,9 +854,10 @@ namespace Hello
             int right = rect.Right;
             int top = rect.Top;
             int bottom = rect.Bottom;
+
             // рассчитываем ширину и высоту (со смещением, чтобы символ не обрезался)
-            int width = (right + 2) - left + 2;
-            int height = (bottom + 2) - top + 2;
+            int width = right - left;
+            int height = bottom - top;
 
             // получаем изображение
             Image image = Image.FromFile(pagesDir + "\\" + name);
@@ -853,22 +865,16 @@ namespace Hello
             Graphics canvas = Graphics.FromImage(bmp);
             canvas.DrawImage(
                 image,
-                new Rectangle(2, 2, width, height),
-                new Rectangle(left - 1, top - 1, width, height),
+                new Rectangle(0, 0, width, height),
+                new Rectangle(left, top, width, height),
                 GraphicsUnit.Pixel);
+            
+            // изменяем размер изображения пропорций
+            bmp = ResizeImage(bmp, new Size(64, 64));
 
-            // высчитываем пропорции
-            int dif = 1;
-
-            if (height > width)
-                dif = height / width;
-            else if (width > height)
-                dif = width / height;
-
-            // изменяем размер изображения с сохранение пропорций
-            bmp = ResizeImage(bmp, new Size(64, dif * 64));
             // сохраняем изображение
             bmp.Save(directory + "\\" + symbolName + ".jpg");
+            count++;
         }
 
         // изменяет размер изображения
@@ -877,8 +883,43 @@ namespace Hello
             return new Bitmap(imgToResize, size);
         }
 
+        // проверяет поле на неуверенно распознанные символы
+        public void CheckSuspicious(IPage page, IBlock block, string fileDirectory)
+        {
+            if (block.Field.Value.IsSuspicious)
+            {
+                // создаем папку для хранения неуверенных символов
+                string path = fileDirectory + "\\suspiciuos_symbols";
+                Directory.CreateDirectory(path);
+
+                // берем значения блока как текст
+                IText text = block.Field.Value.AsText;
+                ICharParams charParams = _engine.CreateCharParams();
+
+                // проходим по всем символам текста в блоке
+                for (int i = 0; i < text.Length; i++)
+                {
+                    text.GetCharParams(i, charParams);
+
+                    // если символ распознан неуверенно и он не пробел
+                    if (charParams.IsSuspicious && !Char.IsWhiteSpace(text.Text[i]))
+                    {
+                        // присваиваем символу имя
+                        string symbolName = "ss_" + i + "_" + block.Field.Name + "_" + count;
+                        // извлекаем символ
+                        ExtractSuspiciousSymbol(charParams.Rectangle, path, symbolName, page);
+                        // вставляем новый символ на место неуверенного
+                        //IText newSymbol = _engine.CreateText(text.Text[i]);
+                        //text.Insert(newSymbol, i);
+
+                        count++;
+                    }
+                }
+            }
+        }
+
         // экспортирует блоки ячеек таблицы в изображения
-        public void ExtractTableCells(IPage page, IBlock block, string definitionName, string fileDirectory, string filename)
+        public void ExtractTableCells(IPage page, IBlock block, string fileDirectory)
         {
             // удаляем лишние строки таблицы
             DeleteEmptyDescriptRow(block.Field);
@@ -897,61 +938,12 @@ namespace Hello
                 {
                     IBlock cell = table.Cell[c, r];
                     int pageNumber = page.Index + 1;
-
-                    // если ячейка имеет неверно распознанные символы
-                    if (cell.Field.Value.IsSuspicious)
-                    {
-                        // берем значения ячейки как текст
-                        IText text = cell.Field.Value.AsText;
-                        ICharParams charParams = _engine.CreateCharParams();
-
-                        // проходим по всем символам текста в ячейке
-                        for (int i = 0; i < text.Length; i++)
-                        {
-                            text.GetCharParams(i, charParams);
-                            // если символ распознан неверно и он не пробел
-                            if (charParams.IsSuspicious && !Char.IsWhiteSpace(text.Text[i]))
-                            {
-                                Console.WriteLine(text.Text[i]);
-                                // создаем директорию с неверно распознанными символами
-                                string path = fileDirectory + "\\suspiciuos_symbols";
-                                Directory.CreateDirectory(path);
-
-                                // присваиваем символу имя
-                                string symbolName = "ss_" + i + "_" + cell.Field.Name + "_" + c + r + "_" + count;
-                                // извлекаем символ
-                                ExtractSuspiciousSymbol(charParams.Rectangle, path, symbolName, page);
-                                count++;
-                            }
-                        }
-                    }
                     // присваиваем ячейке имя
-                    string cellName = definitionName + "_Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
+                    string cellName = "Table_" + cell.Field.Name + "_" + c + r + "_p" + pageNumber + ".jpg";
                     // экспортируем ячейку
                     ExtractBlock(page, cell, cellName, fileDirectory);
                 }
             }
-        }
-
-        // проверяет экспортировать ли ячейки ряда в изображения
-        public bool isSkip(ITableBlock table, int row)
-        {
-            bool skip = false;
-            int columns = table.BoundColumnsCount;
-            for (int c = 0; c < columns; c++)
-            {
-                IBlock cell = table.Cell[c, row];
-                if (cell.Field.Name.Equals("Descript"))
-                {
-                    string text = cell.Field.Value.AsText.PlainText;
-                    if (text.Equals("0") || String.IsNullOrEmpty(text) || text.Length <= 3)
-                    {
-                        skip = true;
-                        break;
-                    }
-                }
-            }
-            return skip;
         }
 
         // удаляет неверно взятый ряд таблицы
@@ -960,10 +952,9 @@ namespace Hello
             for (int i = 0; i < field.Instances.Count; i++)
             {
                 string descript = recursiveFindField(field.Instances[i], "Descript").Value.AsString;
+
                 if (String.IsNullOrEmpty(descript) || descript.Length < 4 || descript.Equals("0"))
-                {
                     field.Instances.DeleteAt(i);
-                }
             }
         }
 
