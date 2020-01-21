@@ -21,6 +21,7 @@ using System.Linq;
 using System.Globalization;
 using System.Reflection;
 using System.Drawing;
+using System.Text;
 
 namespace Hello
 {
@@ -520,8 +521,7 @@ namespace Hello
                     //break;
 
                     IDocument document = _processor.RecognizeNextDocument();
-                    
-                    
+
                     IDocumentDefinition docDefinition = null;
                     CleanDirectories(exportFolder);
                     
@@ -542,7 +542,7 @@ namespace Hello
                     }
                     else {
                         docDefinition = document.DocumentDefinition;
-                        // НОВАЯ ВЕТВЬ
+
                         if (docDefinition == null)
                         {
                             // Couldn't find matching template for the image. In this sample this is an error.
@@ -717,9 +717,9 @@ namespace Hello
 
                         string name = Path.GetFileNameWithoutExtension(document.Pages[0].OriginalImagePath);
                         //string n = document.AsField.Name; // UPD
-                        
-                        trace("Extract the field image...");
 
+                        trace("Extract the field image...");
+                        
                         // создаем директорию с блоками
                         string fileDirectory = exportFolder + "\\blocks\\" + name;
                         Directory.CreateDirectory(fileDirectory);
@@ -752,33 +752,52 @@ namespace Hello
 
                         #endregion
 
+                        //Console.WriteLine(Predict());
+
+                         
                         // экспортируем документ
-                        // оригинальные файлы сохраняем в формате .tiff
-                        document.DocumentDefinition.ExportParams.FileExportParams.ImageExportParams.Format = ImageFileFormatEnum.IFF_Tif;
                         _processor.ExportDocument(document, exportFolder);
-                        // оригинальные файлы сохраняем в формате .pdf
-                        document.DocumentDefinition.ExportParams.FileExportParams.ImageExportParams.Format = ImageFileFormatEnum.IFF_Pdf;
-                        document.DocumentDefinition.ExportParams.FileExportParams.FileOverwriteRule = FileOverwriteRuleEnum.FOR_Replace;
-                        _processor.ExportDocument(document, exportFolder);
+
+                        #region Нумерация страниц
+
+                        // получаем имя документа и номера страниц в общем файле
+                        string docName = Path.GetFileName(document.Pages[0].OriginalImagePath);
+                        // создаем массив размером по количеству страниц документа
+                        int[] pages = new int[document.Pages.Count];
+
+                        // проходим по всем страницам и добавляем номер в массив
+                        for (int i = 0; i < document.Pages.Count; i++)
+                            pages[i] = document.Pages[i].SourceImageInfo.PageIndex + 1;
+
+                        // формируем строку из номеров страниц
+                        string pagesNumbers = String.Format("{0}", string.Join(", ", pages));
+
+                        # endregion
+
+                        var directory = new DirectoryInfo(exportFolder);
+                        string myFile = directory.GetFiles()
+                                     .OrderByDescending(f => f.LastWriteTime)
+                                     .First().Name;
+                        string nameDocument = Path.GetFileNameWithoutExtension(myFile);
+
+                        // формируем полный путь до xml-файла
+                        string pathToXmlFile = exportFolder + "\\" + nameDocument + ".xml";
+
+                        // удаляем пустые строки
+                        DeleteEmptyRows(pathToXmlFile, docName, pagesNumbers);
+
                     }
 
                     // если используется встроенный способ обработки изображений,
                     // проверить их качество
                     if (!condUsingCustomImageSource)
-                            CheckIsImageSuitableForOcr(document);
-                    // сериализация данных в отдельную папку
-                    var directory = new DirectoryInfo(exportFolder);
-                    string myFile = directory.GetFiles()
-                                 .OrderByDescending(f => f.LastWriteTime)
-                                 .First().Name;
-                    string nameDocument = Path.GetFileNameWithoutExtension(myFile);
+                        CheckIsImageSuitableForOcr(document);
+                    
                     Directory.CreateDirectory(exportFolder + "\\visualeditorfiles");
                         //document.AsCustomStorage.SaveToFile(exportFolder + "\\visualeditorfiles\\" + nameDocument + ".mydoc");
 
                     Marshal.ReleaseComObject(docDefinition);
                     Marshal.ReleaseComObject(document);
-                     
-                    DeleteEmptyRows(exportFolder);
 
                     count++;                                        
                 }
@@ -813,6 +832,33 @@ namespace Hello
             }
         }
 
+        public string Predict()
+        {
+            string pythonExe = @"\\SPB-WS-141\Python37_64\python.exe";
+            string script = @"\\SPB-WS-141\NeuralNetwork\predict.py";
+            Process process = new Process();
+            process.StartInfo = new ProcessStartInfo(pythonExe)
+            {
+                Arguments = script,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = false
+            };
+            process.Start();
+            StringBuilder str = new StringBuilder();
+
+            while (!process.HasExited)
+            {
+               str.Append(process.StandardOutput.ReadToEnd());
+            }
+            string outputText = str.ToString();
+            //string outputText = process.StandardOutput.ReadToEnd();
+            Console.WriteLine(process.StandardError.ReadToEnd());
+            Console.WriteLine(outputText);
+            process.WaitForExit();
+            return outputText;
+        }
         
         // извлекает блоки в изображения
         public void ExtractBlock(IPage page, IBlock block, string filename, string fileDirectory)
@@ -1165,122 +1211,121 @@ namespace Hello
                
         }
 
-        void DeleteEmptyRows(string paramPathExportFolder)
+        void DeleteEmptyRows(string file, string documentName, string pagesNumbers)
         {
-            string[] xmlFiles = Directory.GetFiles(paramPathExportFolder, "*.xml");
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.Load(file);
 
-            foreach (string xmlFile in xmlFiles)
+            // создаем новый тег с количеством страниц и записываем в него данные
+            XmlNode pagesNumbersNode = xmlDocument.CreateNode(XmlNodeType.Element, "_Pages", null);
+            pagesNumbersNode.InnerText = pagesNumbers;
+
+            // создаем новый тег с именем оригинального документа и записываем в него данные
+            XmlNode documentNameNode = xmlDocument.CreateNode(XmlNodeType.Element, "_FileName", null);
+            documentNameNode.InnerText = documentName;
+
+            XmlNodeList itemNodes = xmlDocument.GetElementsByTagName("_Table");
+
+            // помещаем новые теги
+            XmlNode child = xmlDocument.DocumentElement.FirstChild;
+            xmlDocument.DocumentElement.FirstChild.InsertAfter(documentNameNode, child.FirstChild);
+            xmlDocument.DocumentElement.FirstChild.InsertAfter(pagesNumbersNode, child.FirstChild);
+
+            string nodeTaxIncluded = null;
+
+            bool condTaxField = false;
+            XmlNodeList listNodesTax = xmlDocument.GetElementsByTagName("_TaxIncluded");
+            if (listNodesTax.Count == 1)
             {
-                XmlDocument xmlDocument = new XmlDocument();
-                xmlDocument.Load(xmlFile);
+                nodeTaxIncluded = listNodesTax[0].InnerText;
 
-                XmlNodeList itemNodes = xmlDocument.GetElementsByTagName("_Table");
-                string nodeTaxIncluded = null;
-
-                bool condTaxField = false;
-                XmlNodeList listNodesTax = xmlDocument.GetElementsByTagName("_TaxIncluded");
-                if (listNodesTax.Count == 1)
-                {
-                    nodeTaxIncluded = listNodesTax[0].InnerText;
-
-                    if (String.IsNullOrEmpty(nodeTaxIncluded))
-                        condTaxField = true;
-                }
+                if (String.IsNullOrEmpty(nodeTaxIncluded))
+                    condTaxField = true;
+            }
                                                    
-                if (itemNodes.Count == 0)
-                    itemNodes = xmlDocument.GetElementsByTagName("_Table1");
+            if (itemNodes.Count == 0)
+                itemNodes = xmlDocument.GetElementsByTagName("_Table1");
 
-                if (itemNodes.Count > 0)
-                {
+            if (itemNodes.Count > 0)
+            {
                     
-                    for (int i = itemNodes.Count - 1; i >= 0; i--)
+                for (int i = itemNodes.Count - 1; i >= 0; i--)
+                {
+                    string fieldDescript;
+                    try
                     {
-                        string fieldDescript;
-                        try
-                        {
-                            fieldDescript = itemNodes[i].SelectSingleNode("_Descript").InnerText;
-                        }
-                        catch
-                        {
-                            break;
-                        }
-
-                        if (String.IsNullOrEmpty(fieldDescript) || fieldDescript.Length < 3)
-                        {
-                            itemNodes[i].ParentNode.RemoveChild(itemNodes[i]);
-                        }
-                        else if (condTaxField) // вычисляем НДС входит в стоимость или нет
-                        {                           
-                            double Price = 0;
-                            double Qty = 0;
-                            double Cost = 0;
-                            double SumWTax = 0;
-
-                            var nodeSumWithTax = itemNodes[i].SelectSingleNode("_SumWithTax").InnerText;
-                            nodeSumWithTax = nodeSumWithTax.Replace('.', ',');
-
-                            if (nodeSumWithTax != null)
-                            {
-                                Double.TryParse(nodeSumWithTax, NumberStyles.Currency, null, out SumWTax);
-                                string nodeCost = null;
-                                try
-                                {
-                                    nodeCost = itemNodes[i].SelectSingleNode("_Cost").InnerText;
-                                    nodeCost = nodeCost.Replace('.', ',');
-                                }
-                                catch
-                                {
-
-                                }
-                                
-
-                                if (String.IsNullOrEmpty(nodeCost))
-                                {
-
-                                    string nodePrice = null;
-                                    string nodeQty = null;
-
-                                    try
-                                    {
-                                        nodePrice = itemNodes[i].SelectSingleNode("_Price").InnerText;
-                                        nodeQty = itemNodes[i].SelectSingleNode("_Qty").InnerText;
-                                    }
-                                    catch { }
-                                    
-
-                                    if (nodePrice != null & nodeQty != null)
-                                    {
-                                        nodePrice = nodePrice.Replace('.', ',');
-                                        nodeQty = nodeQty.Replace('.', ',');
-                                        Double.TryParse(nodePrice, NumberStyles.Currency, null, out Price);
-                                        Double.TryParse(nodeQty, NumberStyles.Currency, null, out Qty);
-                                    }
-
-                                    if (Price > 0 & Qty > 0)
-                                        Cost = Price * Qty;
-                                }
-                                else
-                                    Double.TryParse(nodeCost, NumberStyles.Currency, null, out Cost);
-
-                                if (Cost > 0)
-                                {
-                                    if (Math.Abs(SumWTax - Cost) > 0.1)
-                                        nodeTaxIncluded = "false";
-                                    else
-                                        nodeTaxIncluded = "true";
-
-                                    listNodesTax[0].InnerText = nodeTaxIncluded;
-                                    condTaxField = false;
-                                }
-                            }
-
-                            
-                        }
+                        fieldDescript = itemNodes[i].SelectSingleNode("_Descript").InnerText;
+                    }
+                    catch
+                    {
+                        break;
                     }
 
-                    xmlDocument.Save(xmlFile);
+                    if (String.IsNullOrEmpty(fieldDescript) || fieldDescript.Length < 3)
+                    {
+                        itemNodes[i].ParentNode.RemoveChild(itemNodes[i]);
+                    }
+                    else if (condTaxField) // вычисляем НДС входит в стоимость или нет
+                    {                           
+                        double Price = 0;
+                        double Qty = 0;
+                        double Cost = 0;
+                        double SumWTax = 0;
 
+                        var nodeSumWithTax = itemNodes[i].SelectSingleNode("_SumWithTax").InnerText;
+                        nodeSumWithTax = nodeSumWithTax.Replace('.', ',');
+
+                        if (nodeSumWithTax != null)
+                        {
+                            Double.TryParse(nodeSumWithTax, NumberStyles.Currency, null, out SumWTax);
+                            string nodeCost = null;
+                            try
+                            {
+                                nodeCost = itemNodes[i].SelectSingleNode("_Cost").InnerText;
+                                nodeCost = nodeCost.Replace('.', ',');
+                            }
+                            catch { }
+                                
+                            if (String.IsNullOrEmpty(nodeCost))
+                            {
+                                string nodePrice = null;
+                                string nodeQty = null;
+
+                                try
+                                {
+                                    nodePrice = itemNodes[i].SelectSingleNode("_Price").InnerText;
+                                    nodeQty = itemNodes[i].SelectSingleNode("_Qty").InnerText;
+                                }
+                                catch { }
+                                    
+                                if (nodePrice != null & nodeQty != null)
+                                {
+                                    nodePrice = nodePrice.Replace('.', ',');
+                                    nodeQty = nodeQty.Replace('.', ',');
+                                    Double.TryParse(nodePrice, NumberStyles.Currency, null, out Price);
+                                    Double.TryParse(nodeQty, NumberStyles.Currency, null, out Qty);
+                                }
+
+                                if (Price > 0 & Qty > 0)
+                                    Cost = Price * Qty;
+                            }
+                            else
+                                Double.TryParse(nodeCost, NumberStyles.Currency, null, out Cost);
+
+                            if (Cost > 0)
+                            {
+                                if (Math.Abs(SumWTax - Cost) > 0.1)
+                                    nodeTaxIncluded = "false";
+                                else
+                                    nodeTaxIncluded = "true";
+
+                                listNodesTax[0].InnerText = nodeTaxIncluded;
+                                condTaxField = false;
+                            }
+                        }                  
+                    }
                 }
+                xmlDocument.Save(file);
             }
         }
 
