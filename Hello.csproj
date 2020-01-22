@@ -9,7 +9,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ApplicationIcon />
     <AssemblyKeyContainerName />
-    <AssemblyName>Hello</AssemblyName>
+    <AssemblyName>Blanks</AssemblyName>
     <AssemblyOriginatorKeyFile />
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
@@ -106,9 +106,6 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ABBYY.Tools">
-      <HintPath>..\..\Program Files (x86)\ABBYY PassportReader SDK\1.5\ABBYY.Tools.dll</HintPath>
-    </Reference>
     <Reference Include="Interop.FCEngine">
       <HintPath>C:\ProgramData\ABBYY\SDK\12\FlexiCapture Engine\Inc\.NET interops\v4.5\Interop.FCEngine.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>

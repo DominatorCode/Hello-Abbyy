@@ -386,7 +386,7 @@ namespace Hello
                 _imageLoadingParams.CorrectSkewByText = true;
                 _imageLoadingParams.CorrectSkewByBlackSeparators = true;
 
-                _imageLoadingParams.AutocorrectResolution = true;
+                //_imageLoadingParams.AutocorrectResolution = true;
 
                 // спорные настройки
                 _imageLoadingParams.DiscardImageColor = true;
@@ -398,7 +398,7 @@ namespace Hello
                 //_imageLoadingParams.RemoveColorMarks = true;
 
 
-                //_imageLoadingParams.OverwriteResolution = true;
+                _imageLoadingParams.OverwriteResolution = true;
                 //_imageLoadingParams.XResolutionToOverwrite = 300;
                 //_imageLoadingParams.YResolutionToOverwrite = 300;
 
@@ -409,12 +409,7 @@ namespace Hello
 
                 //_imageLoadingParams.TreatImageAsPhoto = true;
             }
-
-
-
-            var isValid = CheckVersionValid();
-
-           
+        
             var version = _engine.Version;
             //_engine.StartLogging(@"C:\Users\seral\Desktop\FCEExport\Abbyy12\123.txt");
             try
@@ -427,21 +422,15 @@ namespace Hello
                 {
                     _processor.AddDocumentDefinitionFile(file);                                      
                 }
-                foreach (string file in Directory.EnumerateFiles(samplesFolder + @"\SampleProject\Templates", "*.cfl"))
+                /*foreach (string file in Directory.EnumerateFiles(samplesFolder + @"\SampleProject\Templates", "*.cfl"))
                 {
                     _processor.AddClassificationTreeFile(file);
                     
 
-                }
-                SetTemplatesDirectory(samplesFolder + @"\SampleProject");
-                
-                var test = GetTemplateVersion();
+                }*/
+                SetTemplatesDirectory(samplesFolder + @"\SampleProject");               
 
-                //SetLoggingPath(@"E:\temp\log.txt");
-
-                
-                
-                
+                //SetLoggingPath(@"E:\temp\log.txt");                                             
 
                 // ------------------------------------------------
 
@@ -456,7 +445,7 @@ namespace Hello
                 {
                     _imageSource.UseBinarization = true; _imageSource.ModeBinarization = BinarizationModeEnum.BM_Fast;
                     //_imageSource.IsColorBackImage = true;
-                    _imageSource.UseCleanUpImage = true;
+                    //_imageSource.UseCleanUpImage = true;
                 }
 
 
@@ -479,12 +468,11 @@ namespace Hello
 
 
                 _processor.SetUseFirstMatchedDocumentDefinition(true);
-                
+                var classVer = GetSingleTemplateVersion(@"C:\Users\seral\Documents\Visual Studio 2019\DocNet\Hello (C#) v12\bin\x86\Debug\HelloFiles\SampleProject\Templates\CommonClassifier.cfl");
 
 
                 trace("Recognizing images and exporting results...");
                 int count = 0;
-                HashSet<string> listDeclarationRecognizeErrors = new HashSet<string>();
 
                 //string GTDtempExportFolder = ""; 
                 while (true)
@@ -587,128 +575,8 @@ namespace Hello
 
                     CreateExportParameters();
                     // Если это ГДТ основной лист
-                    if (docDefinition.GUID == "6aed93a3-9383-42cd-9296-10c1befdd318")
-                    {
-                        DateTime Started = System.DateTime.Now;
-                        int ProcessId = Process.GetCurrentProcess().Id;
-                        int ThreadId = Thread.CurrentThread.ManagedThreadId;
-                        string addFolderName = Started.ToString("dd-MM-yyyyTHH.mm.ss.fffffff") + "-" + ProcessId.ToString() + "-" + ThreadId.ToString();
-
-                        string GTDtempExportFolder = exportFolder + "\\" + addFolderName;
-                        _exportParams.FileNamePattern = "_" + _exportParams.FileNamePattern;
-                        _processor.ExportDocumentEx(document, GTDtempExportFolder, null, _exportParams);
-                        tmpGTDFoldersList.Add(GTDtempExportFolder);
-                        _exportParams.FileNamePattern = _exportParams.FileNamePattern.Substring(1);
-
-                    } // ГДТ добавочный
-                    else if (docDefinition.GUID == "38c7a837-8ee3-4496-8ef5-f99ae50de1b5")
-                    {
-                        if (tmpGTDFoldersList.Count > 0)
-                        {
-                            // Доработать: добавить постфикс к имени основного файла для точной идентификации основного и добавочных листов
-                            condHasAdditionalDocuments = true;
-                            _processor.ExportDocumentEx(document, tmpGTDFoldersList[tmpGTDFoldersList.Count - 1],
-                                    SetDeclarationFileName("ГТД2", GetFieldValue(document, "PageNumber"), tmpGTDFoldersList[tmpGTDFoldersList.Count - 1]),
-                                    _exportParams);
-                        }
-                        else
-                            listDeclarationRecognizeErrors.Add("Отсутствует основной лист для ГДТ, добавочный лист сохранен не будет, документ №: " + GetFieldValue(document, "DeclarationNumber"));
-
-                    } // экспорт списка товаров для ГДТ
-                    else if (docDefinition.GUID == "360e3ce9-0dc6-468e-8094-1819367555ce" & String.Compare("кдт", GetFieldValue(document, "ItemsType")) == 0)
-                    {
-                        if (tmpGTDFoldersList.Count > 0)
-                        {
-                            condItemsListGDTNeedsInject = true;
-                            _processor.ExportDocumentEx(document, tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + folderItemsListGDTName, null, _exportParams);
-                        }
-                        else
-                            listDeclarationRecognizeErrors.Add("Отсутствует основной лист для ГДТ, список товаров сохранен не будет, документ №: " + GetFieldValue(document, "DeclarationNumber"));
-
-
-                    } // основной лист КДТ
-                    else if (docDefinition.GUID == "f251cc21-7dbe-4bb5-b1f4-7d98b4d06018")
-                    {
-                        if (tmpGTDFoldersList.Count > 0)
-                        {
-                            condKDTHasMainDocument = true;
-                            _exportParams.FileNamePattern = "0" + _exportParams.FileNamePattern;
-
-                            _processor.ExportDocumentEx(document, tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + nameFolderKDT, null, _exportParams);
-
-                            _exportParams.FileNamePattern = _exportParams.FileNamePattern.Substring(1);
-                        }
-                        else
-                            listDeclarationRecognizeErrors.Add("Отсутствует основной лист для ГДТ, КДТ сохранен не будет, документ №: " + GetFieldValue(document, "DeclarationNumber"));
-
-                    } // Дополнительные листы КДТ
-                    else if (docDefinition.GUID == "5000fe22-c7a3-4005-b6ed-f3ddb539e186")
-                    {
-                        if (!condKDTHasMainDocument)
-                            listDeclarationRecognizeErrors.Add("Отсутствует основной лист для КДТ, КДТ добавочный сохранен не будет, документ №: " + GetFieldValue(document, "DeclarationNumber"));
-                        else if (tmpGTDFoldersList.Count > 0)
-                        {
-                            condKDTHasAdditionalDocument = true;
-                            _processor.ExportDocumentEx(document, tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + nameFolderKDT,
-                                    SetDeclarationFileName("KDT2", GetFieldValue(document, "PageNumber"), tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + nameFolderKDT),
-                                    _exportParams);
-                        }
-                        else
-                            listDeclarationRecognizeErrors.Add("Отсутствует основной лист для ГДТ, КДТ добавочный сохранен не будет, документ №: " + GetFieldValue(document, "DeclarationNumber"));
-                    } // экспорт Списка Товаров для КДТ
-                    else if (docDefinition.GUID == "360e3ce9-0dc6-468e-8094-1819367555ce")
-                    {
-                        if (!condKDTHasMainDocument)
-                            listDeclarationRecognizeErrors.Add("Отсутствует основной лист для КДТ, Список товаров сохранен не будет, документ №: " + GetFieldValue(document, "DeclarationNumber"));
-                        else if (tmpGTDFoldersList.Count > 0)
-                        {
-                            condItemsListKDTNeedsInject = true;
-                            _processor.ExportDocumentEx(document, tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + nameFolderKDT + "\\" + folderItemsListKDTName, null, _exportParams);
-                        }
-                        else
-                            listDeclarationRecognizeErrors.Add("Отсутствует основной лист для ГДТ, Список товаров для КДТ сохранен не будет, документ №: " + GetFieldValue(document, "DeclarationNumber"));
-
-                        // бывает, что отсутствует список товаров для ГДТ
-                        // поэтому используем данный список так же и для основной декларации
-                        if (tmpGTDFoldersList.Count > 0)
-                        {
-                            int countItemsListGDT = 0;
-                            int countItemsListKDT = 0;
-
-                            if (!condItemsListGDTNeedsInject)
-                            {
-                                Directory.CreateDirectory(tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + folderItemsListGDTName);
-                                condItemsListGDTNeedsInject = true;
-                                _processor.ExportDocumentEx(document, tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + folderItemsListGDTName, null, _exportParams);
-                                listDeclarationRecognizeErrors.Add("Отсутствует список товаров для ГДТ, будут использованы листы из КДТ");
-                                listDeclarationRecognizeErrors.Add("Для ГДТ был использован лист со списком товаров от КДТ №: " + GetFieldValue(document, "ItemNumber")
-                                    + " , документ №:  " + GetFieldValue(document, "DeclarationNumber"));
-                            }
-                            else
-                            {
-                                if (!condItemsListKDTNeedsInject)
-                                {
-                                    _processor.ExportDocumentEx(document, tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + folderItemsListGDTName, null, _exportParams);
-                                    listDeclarationRecognizeErrors.Add("Для ГДТ был использован лист со списком товаров от КДТ №: " + GetFieldValue(document, "ItemNumber")
-                                    + " , документ №:  " + GetFieldValue(document, "DeclarationNumber"));
-                                }
-                                else
-                                {
-                                    countItemsListGDT = Directory.GetFiles(tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + folderItemsListGDTName).Count();
-                                    countItemsListKDT = Directory.GetFiles(tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + nameFolderKDT + "\\" + folderItemsListKDTName).Count();
-
-                                    if (countItemsListGDT < countItemsListKDT)
-                                    {
-                                        _processor.ExportDocumentEx(document, tmpGTDFoldersList[tmpGTDFoldersList.Count - 1] + "\\" + folderItemsListGDTName, null, _exportParams);
-                                        listDeclarationRecognizeErrors.Add("Был использован лист со списком товаров от КДТ №: " + GetFieldValue(document, "ItemNumber")
-                                        + " , документ №:  " + GetFieldValue(document, "DeclarationNumber"));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                        _processor.ExportDocument(document, exportFolder);
+                    
+                    _processor.ExportDocument(document, exportFolder);
 
                     
                     // если используется встроенный способ обработки изображений,
@@ -730,41 +598,13 @@ namespace Hello
                     Marshal.ReleaseComObject(document);
                     
 
-                    DeleteEmptyRows(exportFolder);
-
                     count++;
 
                                                             
                 }
-
-                // добавляем информацию о нераспознанных страницах
-                if (listDeclarationRecognizeErrors.Count > 0)
-                {
-                    if (String.IsNullOrEmpty(_warningRecognizeResults))
-                        _warningRecognizeResults = string.Join(System.Environment.NewLine, listDeclarationRecognizeErrors);
-                    else
-                    {
-                        _warningRecognizeResults += Environment.NewLine;
-                        _warningRecognizeResults += string.Join(System.Environment.NewLine, listDeclarationRecognizeErrors);
-                    }
-                }
-
-                // добавляем информацию о нерсапознанных листах декларации
-                if (listDeclarationRecognizeErrors.Count > 0)
-                {
-                    if (String.IsNullOrEmpty(_warningRecognizeResults))
-                        _warningRecognizeResults = string.Join(System.Environment.NewLine, listDeclarationRecognizeErrors);
-                    else
-                    {
-                        _warningRecognizeResults += Environment.NewLine;
-                        _warningRecognizeResults += string.Join(System.Environment.NewLine, listDeclarationRecognizeErrors);
-                    }
-                }
             }
             finally
             {
-
-
                 UnloadEngine();
             }
         }
@@ -827,13 +667,13 @@ namespace Hello
                         {
                             errorText = "ABBYY FlexiCapture not registered in system with CLSID {C0003004-0000-48FF-9197-57B7554849BA}";
                             errorText = errorText + Environment.NewLine + "Необходимо выполнить регистрацию программы (regsvr) в службе компонент";
-                            //MessageBox.Show(errorText);
+                            MessageBox.Show(errorText);
                             break;
                         }
                     default:
                         {
                             errorText = "Failed to load ABBYY Engine (" + ex.ErrorCode + ", '" + ex.Message + "')";
-                            //MessageBox.Show(errorText);
+                            MessageBox.Show(errorText);
                             break;
                         }
                 }
@@ -847,14 +687,14 @@ namespace Hello
                     // the COM-object's launch permissions (using DCOMCNFG or OLE/COM object viewer)
                     errorText = "Launch permission for the work-process COM-object is not granted. Use DCOMCNFG to change security settings for the object. (" + e.Message + ")";
                     errorText = errorText + Environment.NewLine + "Необходимо расширить права доступа для программы в службе компонент";
-                    //MessageBox.Show(errorText);
+                    MessageBox.Show(errorText);
                     //throw new Exception(@"Launch permission for the work-process COM-object is not granted.
                     // Use DCOMCNFG to change security settings for the object. (" + e.Message + ")");
                 }
                 else
                 {
                     errorText = "Failed to load ABBYY Engine " + e.Message;
-                    //MessageBox.Show(errorText);
+                    MessageBox.Show(errorText);
                 }
 
                 return false;
@@ -1065,7 +905,7 @@ namespace Hello
                                         Double.TryParse(nodeQty, NumberStyles.Currency, null, out Qty);
                                     }
 
-                                    if (Price > 0 & Qty > 0)
+                                    if (Price > 0 && Qty > 0)
                                         Cost = Price * Qty;
                                 }
                                 else
@@ -1290,7 +1130,7 @@ namespace Hello
         private bool condUsingCustomImageSource = false;
         IFileExportParams _exportParams = null;
 
-        public string Seral { get; private set; } = "aYJ5eBTzpHoXviTluPZp";
+        public string Seral { get; } = "aYJ5eBTzpHoXviTluPZp";
 
         public string GetSingleTemplateVersion(string pathFileTemplate)
         {
@@ -1311,12 +1151,11 @@ namespace Hello
 
             if (Path.GetExtension(pathFileTemplate) == ".cfl")
             {
-                /*IClassificationTree documentDefinition = engine.CreateClassificationTree();
+                IClassificationTree documentDefinition = _engine.CreateClassificationTree();
                 documentDefinition.LoadFromFile(pathFileTemplate);
                 IStringsCollection collectionClasses = documentDefinition.GetClassNames();
                
-                return collectionClasses.ToString() + " версия ";*/
-                return "";
+                return collectionClasses.ToString() + " версия ";
             }
 
             return "";
