@@ -738,9 +738,7 @@ namespace Hello
 
                         #endregion
 
-                        // экспортируем документ
-                        _processor.ExportDocument(document, exportFolder);
-
+                        
                         #region Нумерация страниц
 
                         // получаем имя документа и номера страниц в общем файле
@@ -757,17 +755,21 @@ namespace Hello
 
                         # endregion
 
-                        var directory = new DirectoryInfo(exportFolder);
-                        string myFile = directory.GetFiles()
-                                     .OrderByDescending(f => f.LastWriteTime)
-                                     .First().Name;
-                        string nameDocument = Path.GetFileNameWithoutExtension(myFile);
+                        // берем документ как поле
+                        IField documentField = document.AsField;
 
-                        // формируем полный путь до xml-файла
-                        string pathToXmlFile = exportFolder + "\\" + nameDocument + ".xml";
+                        // находим блок таблицы и удаляем лишние строки
+                        IField table = recursiveFindField(documentField, "Table1");
+                        if (table != null)
+                            DeleteEmptyDescriptRow(table);
 
-                        // удаляем пустые строки
-                        DeleteEmptyRows(pathToXmlFile, docName, pagesNumbers);
+                        // вставляем значение в поле Pages
+                        InsertValueIntoField(documentField, "Pages", pagesNumbers);
+                        // вставляем значение в поле FileName
+                        InsertValueIntoField(documentField, "FileName", docName);
+
+                        // экспортируем документ
+                        _processor.ExportDocument(document, exportFolder);
 
                     }
                         
@@ -813,6 +815,22 @@ namespace Hello
             finally
             {
                 UnloadEngine();
+            }
+        }
+
+        // вставляет новое значение в поле документа
+        public void InsertValueIntoField(IField document, string fieldName, string value)
+        {
+            // находим поле в документе по имени
+            IField field = recursiveFindField(document, fieldName);
+
+            if (field != null)
+            {
+                IText text = field.Value.AsText;
+                // создаем новое значение
+                IText newValue = _engine.CreateText(value);
+                // вставляем новое значение
+                text.Insert(newValue, 0);
             }
         }
 
@@ -920,8 +938,6 @@ namespace Hello
         // экспортирует блоки ячеек таблицы в изображения
         public void ExtractTableCells(IPage page, IBlock block, string fileDirectory)
         {
-            // удаляем лишние строки таблицы
-            DeleteEmptyDescriptRow(block.Field);
             //берем блок как таблицу
             ITableBlock table = block.AsTableBlock();
 
