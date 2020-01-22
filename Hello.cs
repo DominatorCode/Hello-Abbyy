@@ -162,8 +162,11 @@ namespace Hello
 
         private void goButton_Click(object sender, System.EventArgs e)
         {
+            //Console.WriteLine(Predict());
+
             closeButton.Enabled = false;
             goButton.Enabled = false;
+            
             try
             {
                 //loadEngine();
@@ -308,6 +311,7 @@ namespace Hello
                 closeButton.Enabled = true;
                 tmpGTDFoldersList.Clear();
             }
+            
         }
 
         private void exit_Click(object sender, System.EventArgs e)
@@ -713,8 +717,9 @@ namespace Hello
                     #endregion
                     else
                     {
+                        
                         #region Extract blocks
-
+                        /*
                         string name = Path.GetFileNameWithoutExtension(document.Pages[0].OriginalImagePath);
                         //string n = document.AsField.Name; // UPD
 
@@ -749,14 +754,18 @@ namespace Hello
                                     ExtractBlock(page, block, filename, fileDirectory);
                             }
                         }
-
+                        */
                         #endregion
-
+                        
                         //Console.WriteLine(Predict());
 
                          
                         // экспортируем документ
-                        _processor.ExportDocument(document, exportFolder);
+                        //_processor.ExportDocument(document, exportFolder);
+                        
+
+                        //trace("Predict...");
+                        //Console.WriteLine(Predict());
 
                         #region Нумерация страниц
 
@@ -774,18 +783,21 @@ namespace Hello
 
                         # endregion
 
-                        var directory = new DirectoryInfo(exportFolder);
-                        string myFile = directory.GetFiles()
-                                     .OrderByDescending(f => f.LastWriteTime)
-                                     .First().Name;
-                        string nameDocument = Path.GetFileNameWithoutExtension(myFile);
+                        // берем документ как поле
+                        IField documentField = document.AsField;
 
-                        // формируем полный путь до xml-файла
-                        string pathToXmlFile = exportFolder + "\\" + nameDocument + ".xml";
+                        // находим блок таблицы и удаляем лишние строки
+                        IField table = recursiveFindField(documentField, "Table1");
+                        if (table != null)
+                            DeleteEmptyDescriptRow(table);
 
-                        // удаляем пустые строки
-                        DeleteEmptyRows(pathToXmlFile, docName, pagesNumbers);
+                        // вставляем значение в поле Pages
+                        InsertValueIntoField(documentField, "Pages", pagesNumbers);
+                        // вставляем значение в поле FileName
+                        InsertValueIntoField(documentField, "FileName", docName);
 
+                        // экспортируем документ
+                        _processor.ExportDocument(document, exportFolder);
                     }
 
                     // если используется встроенный способ обработки изображений,
@@ -832,14 +844,32 @@ namespace Hello
             }
         }
 
+        // вставляет новое значение в поле документа
+        public void InsertValueIntoField(IField document, string fieldName, string value)
+        {
+            // находим поле в документе по имени
+            IField field = recursiveFindField(document, fieldName);
+
+            if (field != null)
+            {
+                IText text = field.Value.AsText;
+                // создаем новое значение
+                IText newValue = _engine.CreateText(value);
+                // вставляем новое значение
+                text.Insert(newValue, 0);
+            }
+            
+        }
+
         public string Predict()
         {
             string pythonExe = @"\\SPB-WS-141\Python37_64\python.exe";
-            string script = @"\\SPB-WS-141\NeuralNetwork\predict.py";
+            //string script = @"\\SPB-WS-141\NeuralNetwork\predict.py";
+            string script = @"\\SPB-WS-141\Users\zalv\Documents\VSProjects\NeuralNetworkTest\NeuralNetworkTest\bin\Debug\NeuralNetworkTest.exe";
             Process process = new Process();
-            process.StartInfo = new ProcessStartInfo(pythonExe)
+            process.StartInfo = new ProcessStartInfo(script)
             {
-                Arguments = script,
+                //Arguments = script,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -855,7 +885,7 @@ namespace Hello
             string outputText = str.ToString();
             //string outputText = process.StandardOutput.ReadToEnd();
             Console.WriteLine(process.StandardError.ReadToEnd());
-            Console.WriteLine(outputText);
+            //Console.WriteLine(outputText);
             process.WaitForExit();
             return outputText;
         }
@@ -946,29 +976,33 @@ namespace Hello
                 for (int i = 0; i < text.Length; i++)
                 {
                     text.GetCharParams(i, charParams);
+                    
 
                     // если символ распознан неуверенно и он не пробел
                     if (charParams.IsSuspicious && !Char.IsWhiteSpace(text.Text[i]))
                     {
                         // присваиваем символу имя
                         string symbolName = "ss_" + i + "_" + block.Field.Name + "_" + count;
+                        charParams.IsSuspicious = false;
+                        charParams.NeedsVerification = false;
+                        text.SetCharParams(i, text.Length - i, charParams, (int)CharParamsFlags.CFL_Suspicious);
                         // извлекаем символ
-                        ExtractSuspiciousSymbol(charParams.Rectangle, path, symbolName, page);
+                        //ExtractSuspiciousSymbol(charParams.Rectangle, path, symbolName, page);
                         // вставляем новый символ на место неуверенного
                         //IText newSymbol = _engine.CreateText(text.Text[i]);
                         //text.Insert(newSymbol, i);
 
                         count++;
                     }
+                    
                 }
+                
             }
         }
 
         // экспортирует блоки ячеек таблицы в изображения
         public void ExtractTableCells(IPage page, IBlock block, string fileDirectory)
         {
-            // удаляем лишние строки таблицы
-            DeleteEmptyDescriptRow(block.Field);
             //берем блок как таблицу
             ITableBlock table = block.AsTableBlock();
 
@@ -1217,8 +1251,8 @@ namespace Hello
             xmlDocument.Load(file);
 
             // создаем новый тег с количеством страниц и записываем в него данные
-            XmlNode pagesNumbersNode = xmlDocument.CreateNode(XmlNodeType.Element, "_Pages", null);
-            pagesNumbersNode.InnerText = pagesNumbers;
+            //XmlNode pagesNumbersNode = xmlDocument.CreateNode(XmlNodeType.Element, "_Pages", null);
+            //pagesNumbersNode.InnerText = pagesNumbers;
 
             // создаем новый тег с именем оригинального документа и записываем в него данные
             XmlNode documentNameNode = xmlDocument.CreateNode(XmlNodeType.Element, "_FileName", null);
@@ -1229,7 +1263,7 @@ namespace Hello
             // помещаем новые теги
             XmlNode child = xmlDocument.DocumentElement.FirstChild;
             xmlDocument.DocumentElement.FirstChild.InsertAfter(documentNameNode, child.FirstChild);
-            xmlDocument.DocumentElement.FirstChild.InsertAfter(pagesNumbersNode, child.FirstChild);
+            //xmlDocument.DocumentElement.FirstChild.InsertAfter(pagesNumbersNode, child.FirstChild);
 
             string nodeTaxIncluded = null;
 
@@ -1359,7 +1393,7 @@ namespace Hello
             {
                 for (int i = 0; i < children.Count; i++)
                 {
-                    IField child = children[i]; 
+                    IField child = children[i];
                     if (child.Name == name)
                     {
                         return child;
