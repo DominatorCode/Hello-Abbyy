@@ -739,16 +739,26 @@ namespace Hello
                         #endregion
 
                         
-                        #region Нумерация страниц
+                        #region Нумерация страниц и удаление неверно взятых строк таблицы
 
                         // получаем имя документа и номера страниц в общем файле
                         string docName = Path.GetFileName(document.Pages[0].OriginalImagePath);
                         // создаем массив размером по количеству страниц документа
                         int[] pages = new int[document.Pages.Count];
 
-                        // проходим по всем страницам и добавляем номер в массив
+                        // проходим по всем страницам
                         for (int i = 0; i < document.Pages.Count; i++)
-                            pages[i] = document.Pages[i].SourceImageInfo.PageIndex + 1;
+                        {
+                            IPage page = document.Pages[i];
+
+                            // добавляем номер в массив
+                            pages[i] = page.SourceImageInfo.PageIndex + 1;
+
+                            // находим блок таблицы и удаляем неверно взятую строку
+                            IField table = recursiveFindField(document.AsField, "Table1");
+                            if (table != null)
+                                DeleteEmptyDescriptRow(table);
+                        }
 
                         // формируем строку из номеров страниц
                         string pagesNumbers = String.Format("{0}", string.Join(", ", pages));
@@ -757,11 +767,6 @@ namespace Hello
 
                         // берем документ как поле
                         IField documentField = document.AsField;
-
-                        // находим блок таблицы и удаляем лишние строки
-                        IField table = recursiveFindField(documentField, "Table1");
-                        if (table != null)
-                            DeleteEmptyDescriptRow(table);
 
                         // вставляем значение в поле Pages
                         InsertValueIntoField(documentField, "Pages", pagesNumbers);
